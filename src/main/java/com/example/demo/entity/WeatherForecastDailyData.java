@@ -12,6 +12,7 @@ public class WeatherForecastDailyData {
 	private Integer maxtemp_c;
 	private Integer mintemp_c;
 	private Integer avgtemp_c;
+	private Integer code;
 	private String text;
 	private Integer dayilyChanceOfRain;
 	private Integer avghumidity;

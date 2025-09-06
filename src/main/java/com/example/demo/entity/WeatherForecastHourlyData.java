@@ -13,6 +13,7 @@ public class WeatherForecastHourlyData {
 
 	private LocalDateTime time;
 	private String temp_c;
+	private Integer code;
 	private String text;
 	private Integer humidity;
 	private Integer chanceOfRain;
