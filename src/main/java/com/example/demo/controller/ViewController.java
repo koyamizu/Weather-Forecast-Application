@@ -1,7 +1,5 @@
 package com.example.demo.controller;
 
-import java.util.List;
-
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,7 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import com.example.demo.entity.WeatherForecast;
 import com.example.demo.form.WeatherForecastSearchForm;
-import com.example.demo.serivce.SearchService;
+import com.example.demo.serivce.WeatherForecastSearchService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ViewController {
 
-	private final SearchService service;
+	private final WeatherForecastSearchService service;
 
 
 	@GetMapping("home")
@@ -29,16 +29,16 @@ public class ViewController {
 
 	@PostMapping("result")
 	public String showResultView(@Validated WeatherForecastSearchForm form,
-			BindingResult bindingResult, Model model) {
+			BindingResult bindingResult, Model model) throws JsonMappingException, JsonProcessingException {
 		
 		if(bindingResult.hasErrors()) {
 			return "home";
 		}
 		
-		List<WeatherForecast> weatherForecasts = service.findForecast(form.getCity(),form.getDate());
+		WeatherForecast weatherForecast = service.findForecast(form.getCity(),form.getDate());
 		
 		
-		model.addAttribute(weatherForecasts);
+		model.addAttribute(weatherForecast);
 		model.addAttribute("date",form.getDate());
 		model.addAttribute("city",form.getCity());
 		
