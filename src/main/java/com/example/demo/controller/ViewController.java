@@ -9,6 +9,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.example.demo.entity.WeatherForecast;
+
+import io.swagger.client.ApiClient;
+import io.swagger.client.Configuration;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -16,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class ViewController {
 
 	private final SearchService service;
+	 ApiClient defaultClient = Configuration.getDefaultApiClient();
 
 	@GetMapping("home")
 	public String showHomeView() {
