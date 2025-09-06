@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.threeten.bp.LocalDate;
 
-import com.example.demo.entity.WeatherForecast;
+import com.example.demo.entity.WeatherForecastResult;
 import com.example.demo.repository.WeatherForecastSearchMapper;
 import com.example.demo.serivce.WeatherForecastSearchService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,9 +27,9 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 	private final WeatherForecastSearchMapper weatherForecastSearchMapper;
 	
 	@Override
-	public WeatherForecast findForecast(String city, java.time.LocalDate date) throws JsonMappingException, JsonProcessingException {
+	public WeatherForecastResult findForecast(String city, java.time.LocalDate date) throws JsonMappingException, JsonProcessingException {
 		
-		WeatherForecast forecast=weatherForecastSearchMapper.select(city, date);
+		WeatherForecastResult forecast=weatherForecastSearchMapper.select(city, date);
 		
 		if(Objects.equals(null, forecast)) {
 			return forecast;
@@ -51,7 +51,7 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
             
     		ObjectMapper objectMapper = new ObjectMapper();
     		forecast = objectMapper.readValue(result,
-    				new TypeReference<WeatherForecast>() {
+    				new TypeReference<WeatherForecastResult>() {
     				});
     		
     		weatherForecastSearchMapper.insert(forecast);

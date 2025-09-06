@@ -10,7 +10,7 @@ import com.example.demo.form.WeatherForecastSearchForm;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-public class WeatherForecastSearchFormValidation implements Validator {
+public class WeatherForecastSearchFormValidator implements Validator {
 
 	@Override
 	public boolean supports(Class<?> clazz) {
