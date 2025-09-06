@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import com.example.demo.entity.WeatherForecast;
 
 import io.swagger.client.ApiClient;
-import io.swagger.client.Configuration;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -35,7 +34,7 @@ public class ViewController {
 			return "home";
 		}
 		
-		List<WeatherForecast> weatherForecasts = service.findForecastData(form.getCity,form.getDate);
+		List<WeatherForecast> weatherForecasts = service.findForecast(form.getCity,form.getDate);
 		
 //				if(weatherForecasts.isEmpty()) {
 //					return "redirect:/https://api.weatherapi.com/v1/forecast.json"
