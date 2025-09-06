@@ -9,13 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SearchForm {
+public class WeatherForecastSearchForm {
 	
 	private LocalDate date;
 	private String City;
 	
-	public void setDate(LocalDate date) {
-		
-	}
 
 }
