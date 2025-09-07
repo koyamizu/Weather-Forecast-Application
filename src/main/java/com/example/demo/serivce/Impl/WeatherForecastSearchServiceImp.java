@@ -29,13 +29,11 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 			return forecast;
 		}
 
-        
 		String dateStr=date.toString();
 		WeatherApiClient client=new WeatherApiClient(city,dateStr);
 
         try {
-            forecast=client.fetchWeather();
-    		
+            forecast=client.fetchWeather();    		
     		weatherForecastSearchMapper.insert(forecast);
         } catch (ApiException e) {
             System.err.println("Exception when calling ApisApi#astronomy");

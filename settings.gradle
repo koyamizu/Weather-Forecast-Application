@@ -1,1 +1,3 @@
-rootProject.name = 'Weather-Forecast-Application'
+rootProject.name = 'Application'
+
+includeBuild("../swagger-java-client")

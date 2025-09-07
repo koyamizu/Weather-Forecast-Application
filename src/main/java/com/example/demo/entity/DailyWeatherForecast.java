@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WeatherForecastDailyData {
+public class DailyWeatherForecast {
 	
 	private Integer maxtemp_c;
 	private Integer mintemp_c;

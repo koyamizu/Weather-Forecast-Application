@@ -15,6 +15,6 @@ public class WeatherForecastResult {
 	private String name;
 	private String country;
 	private LocalDate date;
-	private WeatherForecastDailyData dailyData;
-	private List<WeatherForecastHourlyData> hourlyData;
+	private DailyWeatherForecast dailyData;
+	private List<HourlyWeatherForecastData> hourlyData;
 }

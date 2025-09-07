@@ -3,15 +3,14 @@ package com.example.demo.entity;
 import org.threeten.bp.LocalDate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.client.ApiClient;
 import io.swagger.client.ApiException;
 import io.swagger.client.Configuration;
 import io.swagger.client.api.ApisApi;
 import io.swagger.client.auth.ApiKeyAuth;
+import io.swagger.client.model.InlineResponse2002;
 
 public class WeatherApiClient {
 	
@@ -30,12 +29,9 @@ public class WeatherApiClient {
 
         ApisApi apiInstance = new ApisApi();
 
-        String result = (String)apiInstance.forecastWeather(city,1,date
-        		, null, null, "jap", null, null, null);
+        InlineResponse2002 result = (InlineResponse2002) apiInstance.forecastWeather(city,1,date
+        		, null, null, "ja", null, null, null);
         
-		ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.readValue(result,
-				new TypeReference<WeatherForecastResult>() {
-				});
+        return new WeatherForecastResult();
 	}
 }

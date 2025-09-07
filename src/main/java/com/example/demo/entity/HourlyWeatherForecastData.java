@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WeatherForecastHourlyData {
+public class HourlyWeatherForecastData {
 
 	private LocalDateTime time;
 	private String temp_c;
