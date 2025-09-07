@@ -15,7 +15,7 @@ public interface WeatherForecastSearchMapper {
 	
 	InlineResponse2002 select(String city, LocalDate date);
 		
-	void insertDaily(LocalDate date, Location location,ForecastDay daily);
+	void insertDay(LocalDate date, Location location,ForecastDay day);
 	
-	void insertHourly(Location location,List<ForecastHour> hourlies);
+	void insertHour(Location location,List<ForecastHour> hours);
 }

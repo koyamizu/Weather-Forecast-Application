@@ -6,19 +6,19 @@
 --	,CONSTRAINT uq_cities_name UNIQUE (name)
 --);
 
-CREATE TABLE daily_forecasts(
+CREATE TABLE day_forecasts(
 	date date NOT NULL
 --	,city_id INT NOT NULL
 --	「name」だとわかりづらいのでcityにしている。MyBatisでnameに変換する
 	,city VARCHAR(35) NOT NULL
 	,country VARCHAR(25) NOT NULL
-	,max_temp INT NOT NULL
-	,min_temp  INT NOT NULL
-	,avg_temp INT NOT NULL
+	,max_temp DECIMAL(3,1) NOT NULL
+	,min_temp  DECIMAL(3,1) NOT NULL
+	,avg_temp DECIMAL(3,1) NOT NULL
 --	,condition_code INT NOT NULL
     ,condition VARCHAR(23) NOT NULL
-	,chance_of_rain INT NOT NULL
-	,avg_humidity INT NOT NULL
+	,daily_chance_of_rain DECIMAL(3,1) NOT NULL
+	,avg_humidity DECIMAL(3,1) NOT NULL
 	,created_at datetime DEFAULT CURRENT_TIMESTAMP
 	,PRIMARY KEY (date, city)
 --	このアプリでは観測地点名のみを利用する場面がないので、地点名と検索結果を一緒に登録してもいい気がする。
@@ -31,16 +31,16 @@ CREATE TABLE daily_forecasts(
 --        REFERENCES weather_conditions(code)
 );
 
-CREATE TABLE hourly_forecasts(
+CREATE TABLE hour_forecasts(
 	time datetime NOT NULL
 	,city VARCHAR(35) NOT NULL
 	,country VARCHAR(25) NOT NULL
 --	,city_id INT NOT NULL
-	,temp INT NOT NULL
+	,temp DECIMAL(3,1) NOT NULL
 --	,condition_code INT NOT NULL
     ,condition VARCHAR(23) NOT NULL
-	,chance_of_rain INT NOT NULL
-	,humidity INT NOT NULL
+	,chance_of_rain DECIMAL(3,1) NOT NULL
+	,humidity DECIMAL(3,1) NOT NULL
 	,created_at datetime DEFAULT CURRENT_TIMESTAMP
 	,PRIMARY KEY (time, city)
 --	,PRIMARY KEY (time, city_id)

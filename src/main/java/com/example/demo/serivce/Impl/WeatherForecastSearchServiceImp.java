@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.entity.WeatherApiClient;
 import com.example.demo.repository.WeatherForecastSearchMapper;
@@ -25,6 +26,7 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 	private final WeatherForecastSearchMapper weatherForecastSearchMapper;
 
 	@Override
+	@Transactional
 	public InlineResponse2002 findForecast(String city, java.time.LocalDate date)
 			throws JsonMappingException, JsonProcessingException {
 
@@ -44,14 +46,15 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 			ForecastDay day = forecast.getForecast().getForecastday().get(0).getDay();
 			List<ForecastHour> hour = forecast.getForecast().getForecastday().get(0).getHour();
 			
-			weatherForecastSearchMapper.insertDaily(date,location, day);
-			weatherForecastSearchMapper.insertHourly(location, hour);
+			weatherForecastSearchMapper.insertDay(date,location, day);
+			weatherForecastSearchMapper.insertHour(location, hour);
 			
 		} catch (ApiException e) {
 			System.err.println("Exception when calling ApisApi#astronomy");
 			e.printStackTrace();
+			//TODO RuntimeExceiptionを投げる
 		}
-
+		//DBアクセスに失敗しても、とりあえず結果だけはクライアントに返して、ログ表示を行う
 		return forecast;
 	}
 

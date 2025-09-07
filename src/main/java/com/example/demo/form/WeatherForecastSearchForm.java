@@ -2,6 +2,8 @@ package com.example.demo.form;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,8 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WeatherForecastSearchForm {
 	
+	@NotNull
 	private LocalDate date;
-	private String City;
+	@NotNull
+	private String city;
 	
-
 }

@@ -2,12 +2,208 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper
 	namespace="com.example.demo.repository.WeatherForecastSearchMapper">
+		
+<!--	 Date -->
+<!--	 標準ライブラリのLocalDateではないので、変換が必要-->
+<!--	<resultMap id="DateResult" type="org.threeten.bp.LocalDate">-->
+<!--	  <id property="date" column="date"/>-->
+<!--	</resultMap>-->
 	
-	<insert id="insert">
+<!--	 Time -->
+<!--	 標準ライブラリのLocalDateTimeではないので、変換が必要-->
+<!--	<resultMap id="TimeResult" type="org.threeten.bp.LocalDateTime">-->
+<!--	  <id property="time" column="time"/>-->
+<!--	</resultMap>-->
+	
+<!--	dateは(MySQL)LocalDate→︎(java)LocaDate(threeten)の変換が必要-->
+<!--	　insertの時は標準ライブラリのLocalDateを使うので不要-->
+<!--	timeは(MySQL)LocalDateTime↔︎(java)Stringの変換が必要-->
+	
+	<!-- Condition -->
+	<resultMap id="ConditionResult" type="io.swagger.client.model.ForecastDayCondition">
+	  <id property="text" column="condition"/>
+	</resultMap>
+	
+	<!-- Location -->
+	<resultMap id="LocationResult" type="io.swagger.client.model.Location">
+	  <id property="name" column="city"/>
+	  <result property="country" column="country"/>
+	</resultMap>
+	
+	<!-- ForecastDay -->
+	<resultMap id="ForecastDayResult" type="io.swagger.client.model.ForecastDay">
+	  <id property="dummy" column="dummy"/>
+	  <result property="maxtempC" column="max_temp"/>
+	  <result property="mintempC" column="min_temp"/>
+	  <result property="avgtempC" column="avg_temp"/>
+	  <result property="avghumidity" column="avg_humidity"/>
+	  <result property="dailyChanceOfRain" column="daily_chance_of_rain"/>
+	  <association property="condition" resultMap="ConditionResult"/>
+	</resultMap>
+	
+	<!-- ForecastHour -->
+	<resultMap id="ForecastHourResult" type="io.swagger.client.model.ForecastHour">
+	  <id property="dummy" column="dummy"/>
+	  <result property="time" column="time" typeHandler="com.example.utility.StringTypeHandler"/>
+	  <result property="tempC" column="temp"/>
+	  <result property="humidity" column="humidity"/>
+	  <result property="chanceOfRain" column="chance_of_rain"/>
+	  <association property="condition" resultMap="ConditionResult"/>
+	</resultMap>
+	
+	<!-- ForecastForecastday -->
+	<resultMap id="ForecastForecastdayResult" type="io.swagger.client.model.ForecastForecastday">
+	  <id property="dummy" column="dummy"/>
+	  <result property="date" column="date" typeHandler="com.example.utility.ThreeTenTypeHandler"/>
+	  <association property="day" resultMap="ForecastDayResult"/>
+	  <collection property="hour" resultMap="ForecastHourResult"/>
+	</resultMap>
+	
+	<!-- Forecast -->
+	<resultMap id="ForecastResult" type="io.swagger.client.model.Forecast">
+	  <collection property="forecastday" resultMap="ForecastForecastdayResult"/>
+	</resultMap>
+	
+	<!-- InlineResponse2002  -->
+	<resultMap id="LocationAndDayAndHourForecastResult"
+	           type="io.swagger.client.model.InlineResponse2002">
+	  <association property="location" resultMap="LocationResult"/>
+	  <association property="forecast" resultMap="ForecastResult"/>
+	</resultMap>
+
+	
+	<select id="select" resultMap="LocationAndDayAndHourForecastResult">
+	  SELECT
+        d.date
+        ,d.city
+        ,d.country
+        ,d.max_temp
+        ,d.min_temp
+        ,d.avg_temp
+        ,d.avg_humidity
+        ,d.daily_chance_of_rain
+        ,d.condition AS day_condition
+        ,h.time
+	    ,h.temp
+	    ,h.humidity
+	    ,h.chance_of_rain
+	    ,h.condition
+      FROM
+        day_forecasts AS d
+        INNER JOIN
+          hour_forecasts AS h
+          ON d.city = h.city
+      WHERE
+        d.date = #{date}
+	  ;
+	</select>
+	
+	<select id="selectHour" resultMap="ForecastForecastdayResult">
+	  SELECT
+	    time
+	    ,city
+	    ,country
+	    ,temp
+	    ,condition
+	    ,chance_of_rain
+	    ,humidity
+	  FROM
+	    hour_forecasts
+      WHERE
+        date = #{date}
+        AND city = #{name}
+	  ;
+	</select>
+	
+	<select id="selectDay" resultMap="ForecastForecastdayResult">
+	  SELECT
+        date
+        ,city
+        ,country
+        ,max_temp
+        ,min_temp
+        ,avg_temp
+        ,condition
+        ,daily_chance_of_rain
+        ,avg_humidity
+      FROM
+        day_forecasts
+      WHERE
+        date = #{date}
+        AND city = #{name}
+	  ;
+	</select>
+	
+	<select id="selecthour">
+	  SELECT
+	    time
+	    ,city
+	    ,country
+	    ,temp
+	    ,condition
+	    ,chance_of_rain
+	    ,humidity
+	  FROM
+	    hour_forecasts
+      WHERE
+        date = #{date}
+        AND city = #{name}
+	  ;
+	</select>
+	
+	<insert id="insertDay">
 	  INSERT INTO
-	    location(name,country)
-	  VALUE
-	    (#{location.name},#{location.country})
+	    day_forecasts
+	    (
+	      date
+	      ,city
+	      ,country
+	      ,max_temp
+	      ,min_temp
+	      ,avg_temp
+	      ,condition
+	      ,daily_chance_of_rain
+	      ,avg_humidity
+	    )
+	  VALUES
+	    (
+	    #{date}
+	    ,#{location.name}
+	    ,#{location.country}
+	    ,#{day.maxtempC}
+	    ,#{day.mintempC}
+	    ,#{day.avgtempC}
+	    ,#{day.condition.text}
+	    ,#{day.dailyChanceOfRain}
+	    ,#{day.avghumidity}
+	    )
+	  ;
+	</insert>
+	
+	<insert id="insertHour">
+	  INSERT INTO
+	    hour_forecasts
+	    (
+	      time
+	      ,city
+	      ,country
+	      ,temp
+	      ,condition
+	      ,chance_of_rain
+	      ,humidity
+	    )
+	  VALUES
+	  <foreach collection="hours" index="hour" separator=",">
+	    (
+	    #{hour.time}
+	    ,#{location.name}
+	    ,#{location.country}
+	    ,#{hour.temp}
+	    ,#{hour.condition.text}
+	    ,#{hour.chanceOfRain}
+	    ,#{hour.humidity}
+	    )
+	    </foreach>
 	  ;
 	</insert>
 </mapper>
