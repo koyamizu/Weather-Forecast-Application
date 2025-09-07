@@ -15,7 +15,7 @@ public class WeatherApiClientTest {
 
 	@Test
 	void test_fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {
-		WeatherApiClient client=new WeatherApiClient("東京","2025-09-07");
+		WeatherApiClient client=new WeatherApiClient("tokyo","2025-09-07");
 		InlineResponse2002 result=client.fetchWeather();
 		assertThat(result).isNotNull();
 	}
