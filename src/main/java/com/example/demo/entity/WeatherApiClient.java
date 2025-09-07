@@ -22,16 +22,14 @@ public class WeatherApiClient {
         this.date=LocalDate.parse(dateStr);
 	}
 
-	public WeatherForecastResult fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {
+	public InlineResponse2002 fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {
 		ApiClient defaultClient = Configuration.getDefaultApiClient();
 		ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
         ApiKeyAuth.setApiKey("bbfd427d1cf746e79eb30549250609");
 
         ApisApi apiInstance = new ApisApi();
 
-        InlineResponse2002 result = (InlineResponse2002) apiInstance.forecastWeather(city,1,date
+        return (InlineResponse2002) apiInstance.forecastWeather(city,1,date
         		, null, null, "ja", null, null, null);
-        
-        return new WeatherForecastResult();
 	}
 }

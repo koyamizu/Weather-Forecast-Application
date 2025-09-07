@@ -4,12 +4,12 @@ import java.time.LocalDate;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.example.demo.entity.WeatherForecastResult;
+import io.swagger.client.model.InlineResponse2002;
 
 @Mapper
 public interface WeatherForecastSearchMapper {
 
-	WeatherForecastResult select(String city, LocalDate date);
+	InlineResponse2002 select(String city, LocalDate date);
 	
-	void insert(WeatherForecastResult forecast);
+	void insert(InlineResponse2002 forecast);
 }

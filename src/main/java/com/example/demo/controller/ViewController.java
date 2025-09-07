@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import com.example.demo.entity.WeatherForecastResult;
 import com.example.demo.form.WeatherForecastSearchForm;
 import com.example.demo.serivce.WeatherForecastSearchService;
 import com.example.demo.utility.WeatherForecastSearchFormValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import io.swagger.client.model.InlineResponse2002;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -43,7 +43,7 @@ public class ViewController {
 			return "home";
 		}
 		
-		WeatherForecastResult weatherForecast = service.findForecast(form.getCity(),form.getDate());
+		InlineResponse2002 weatherForecast = service.findForecast(form.getCity(),form.getDate());
 		
 		model.addAttribute(weatherForecast);
 		model.addAttribute("date",form.getDate());

@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WeatherForecastSearchFormValidator implements Validator {
 
+	private LocalDate today = LocalDate.now();
+	
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return WeatherForecastSearchForm.class.isAssignableFrom(clazz);
@@ -21,16 +23,15 @@ public class WeatherForecastSearchFormValidator implements Validator {
 	public void validate(Object target, Errors errors) {
 		WeatherForecastSearchForm form = (WeatherForecastSearchForm) target;
 
-		LocalDate today = LocalDate.now();
-		if (!today.isAfter(form.getDate())) {
+		if (form.getDate().isBefore(today)) {
 			errors.rejectValue("date", "WeatherForecastSearchForm.date"
 					, "今日以降の日付を指定してください");
 		}
 
-		Boolean isOver14Days = today.until(form.getDate()).getDays() > 14;
+		Boolean isOver14Days = today.until(form.getDate()).getDays() > 15;
 		if (isOver14Days) {
 			errors.rejectValue("date", "WeatherForecastSearchForm.date"
-					, "今日から14日以内までを指定してください");
+					, "今日から15日以内までを指定してください");
 		}
 	}
 }

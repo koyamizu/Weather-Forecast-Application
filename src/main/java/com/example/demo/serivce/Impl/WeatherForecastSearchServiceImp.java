@@ -5,13 +5,13 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.entity.WeatherApiClient;
-import com.example.demo.entity.WeatherForecastResult;
 import com.example.demo.repository.WeatherForecastSearchMapper;
 import com.example.demo.serivce.WeatherForecastSearchService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import io.swagger.client.ApiException;
+import io.swagger.client.model.InlineResponse2002;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -21,9 +21,9 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 	private final WeatherForecastSearchMapper weatherForecastSearchMapper;
 	
 	@Override
-	public WeatherForecastResult findForecast(String city, java.time.LocalDate date) throws JsonMappingException, JsonProcessingException {
+	public InlineResponse2002 findForecast(String city, java.time.LocalDate date) throws JsonMappingException, JsonProcessingException {
 		
-		WeatherForecastResult forecast=weatherForecastSearchMapper.select(city, date);
+		InlineResponse2002 forecast=weatherForecastSearchMapper.select(city, date);
 		
 		if(Objects.equals(null, forecast)) {
 			return forecast;
@@ -40,7 +40,7 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
             e.printStackTrace();
         }
 
-		return null;
+		return forecast;
 	}
 
 }
