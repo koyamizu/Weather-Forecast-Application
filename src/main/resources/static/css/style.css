@@ -1,0 +1,37 @@
+@charset "UTF-8";
+
+.navbar-nav {
+	float: none;
+	text-align: center;
+}
+
+.navbar-nav>li {
+	float: none;
+	display: inline-block;
+}
+
+table th,
+table td {
+	text-align: center;
+	vertical-align: middle;
+}
+
+table th {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+h1 {
+	margin-bottom:20px;
+}
+
+.todo-form {
+	width: 60%;
+	margin: 0 auto;
+}
+
+.todo-detail th {
+  background-color: #d9edf7;
+  width: 20%;
+}
+
