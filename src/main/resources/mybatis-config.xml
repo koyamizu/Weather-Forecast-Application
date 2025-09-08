@@ -5,7 +5,7 @@
   
 <configuration>
     <typeHandlers>
-        <typeHandler handler="com.example.utility.StringTypeHandler" javaType="java.lang.String"/>
-        <typeHandler handler="com.example.utility.ThreeTenTypeHandler" javaType="org.threeten.bp.LocalDate"/>
+        <typeHandler handler="com.example.demo.utility.StringTypeHandler" javaType="java.lang.String"/>
+        <typeHandler handler="com.example.demo.utility.ThreeTenTypeHandler" javaType="org.threeten.bp.LocalDate"/>
     </typeHandlers>
 </configuration>

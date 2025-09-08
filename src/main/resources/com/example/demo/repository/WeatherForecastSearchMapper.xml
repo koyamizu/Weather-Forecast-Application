@@ -20,8 +20,13 @@
 <!--	timeは(MySQL)LocalDateTime↔︎(java)Stringの変換が必要-->
 	
 	<!-- Condition -->
-	<resultMap id="ConditionResult" type="io.swagger.client.model.ForecastDayCondition">
+	<resultMap id="ConditionResult" type="io.swagger.client.model.ForecastCondition">
 	  <id property="text" column="condition"/>
+	</resultMap>
+	
+	<!-- Condition -->
+	<resultMap id="DayConditionResult" type="io.swagger.client.model.ForecastDayCondition">
+	  <id property="text" column="day_condition"/>
 	</resultMap>
 	
 	<!-- Location -->
@@ -38,13 +43,12 @@
 	  <result property="avgtempC" column="avg_temp"/>
 	  <result property="avghumidity" column="avg_humidity"/>
 	  <result property="dailyChanceOfRain" column="daily_chance_of_rain"/>
-	  <association property="condition" resultMap="ConditionResult"/>
+	  <association property="condition" resultMap="DayConditionResult"/>
 	</resultMap>
 	
 	<!-- ForecastHour -->
 	<resultMap id="ForecastHourResult" type="io.swagger.client.model.ForecastHour">
-	  <id property="dummy" column="dummy"/>
-	  <result property="time" column="time" typeHandler="com.example.utility.StringTypeHandler"/>
+	  <id property="time" column="time" typeHandler="com.example.demo.utility.StringTypeHandler"/>
 	  <result property="tempC" column="temp"/>
 	  <result property="humidity" column="humidity"/>
 	  <result property="chanceOfRain" column="chance_of_rain"/>
@@ -53,8 +57,7 @@
 	
 	<!-- ForecastForecastday -->
 	<resultMap id="ForecastForecastdayResult" type="io.swagger.client.model.ForecastForecastday">
-	  <id property="dummy" column="dummy"/>
-	  <result property="date" column="date" typeHandler="com.example.utility.ThreeTenTypeHandler"/>
+	  <id property="date" column="date" typeHandler="com.example.demo.utility.ThreeTenTypeHandler"/>
 	  <association property="day" resultMap="ForecastDayResult"/>
 	  <collection property="hour" resultMap="ForecastHourResult"/>
 	</resultMap>
@@ -95,10 +98,11 @@
           ON d.city = h.city
       WHERE
         d.date = #{date}
+          AND d.city = #{city}
 	  ;
 	</select>
 	
-	<select id="selectHour" resultMap="ForecastForecastdayResult">
+	<select id="selectHour" resultMap="ForecastHourResult">
 	  SELECT
 	    time
 	    ,city
@@ -111,11 +115,11 @@
 	    hour_forecasts
       WHERE
         date = #{date}
-        AND city = #{name}
+        AND city = #{city}
 	  ;
 	</select>
 	
-	<select id="selectDay" resultMap="ForecastForecastdayResult">
+	<select id="selectDay" resultMap="LocationAndDayAndHourForecastResult">
 	  SELECT
         date
         ,city
@@ -123,31 +127,14 @@
         ,max_temp
         ,min_temp
         ,avg_temp
-        ,condition
+        ,condition AS day_condition
         ,daily_chance_of_rain
         ,avg_humidity
       FROM
         day_forecasts
       WHERE
         date = #{date}
-        AND city = #{name}
-	  ;
-	</select>
-	
-	<select id="selecthour">
-	  SELECT
-	    time
-	    ,city
-	    ,country
-	    ,temp
-	    ,condition
-	    ,chance_of_rain
-	    ,humidity
-	  FROM
-	    hour_forecasts
-      WHERE
-        date = #{date}
-        AND city = #{name}
+        AND city = #{city}
 	  ;
 	</select>
 	
@@ -184,7 +171,8 @@
 	  INSERT INTO
 	    hour_forecasts
 	    (
-	      time
+	      date
+	      ,time
 	      ,city
 	      ,country
 	      ,temp
@@ -193,12 +181,13 @@
 	      ,humidity
 	    )
 	  VALUES
-	  <foreach collection="hours" index="hour" separator=",">
+	  <foreach collection="hours" item="hour" separator=",">
 	    (
-	    #{hour.time}
+	    #{date}
+	    ,#{hour.time}
 	    ,#{location.name}
 	    ,#{location.country}
-	    ,#{hour.temp}
+	    ,#{hour.tempC}
 	    ,#{hour.condition.text}
 	    ,#{hour.chanceOfRain}
 	    ,#{hour.humidity}

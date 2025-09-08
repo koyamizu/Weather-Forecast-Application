@@ -13,9 +13,13 @@ import io.swagger.client.model.Location;
 @Mapper
 public interface WeatherForecastSearchMapper {
 	
-	InlineResponse2002 select(String city, LocalDate date);
+//	InlineResponse2002 select(String city, LocalDate date);
+	
+	InlineResponse2002 selectDay(String city, LocalDate date);
+	
+	List<ForecastHour> selectHour(String city, LocalDate date);
 		
 	void insertDay(LocalDate date, Location location,ForecastDay day);
 	
-	void insertHour(Location location,List<ForecastHour> hours);
+	void insertHour(LocalDate date, Location location,List<ForecastHour> hours);
 }

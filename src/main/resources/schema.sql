@@ -32,7 +32,8 @@ CREATE TABLE day_forecasts(
 );
 
 CREATE TABLE hour_forecasts(
-	time datetime NOT NULL
+	date date NOT NULL
+	,time TIME NOT NULL
 	,city VARCHAR(35) NOT NULL
 	,country VARCHAR(25) NOT NULL
 --	,city_id INT NOT NULL

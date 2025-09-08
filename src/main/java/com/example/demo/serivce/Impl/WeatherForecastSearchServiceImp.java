@@ -30,9 +30,11 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 	public InlineResponse2002 findForecast(String city, java.time.LocalDate date)
 			throws JsonMappingException, JsonProcessingException {
 
-		InlineResponse2002 forecast = weatherForecastSearchMapper.select(city, date);
+		InlineResponse2002 forecast = weatherForecastSearchMapper.selectDay(city, date);
 
 		if (!Objects.equals(null, forecast)) {
+			List<ForecastHour> hours=weatherForecastSearchMapper.selectHour(city, date);
+			forecast.getForecast().getForecastday().get(0).setHour(hours);
 			return forecast;
 		}
 
@@ -47,7 +49,7 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 			List<ForecastHour> hour = forecast.getForecast().getForecastday().get(0).getHour();
 			
 			weatherForecastSearchMapper.insertDay(date,location, day);
-			weatherForecastSearchMapper.insertHour(location, hour);
+			weatherForecastSearchMapper.insertHour(date,location, hour);
 			
 		} catch (ApiException e) {
 			System.err.println("Exception when calling ApisApi#astronomy");
