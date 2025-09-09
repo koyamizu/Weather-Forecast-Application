@@ -7,7 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 
 import io.swagger.client.model.ForecastDay;
 import io.swagger.client.model.ForecastHour;
-import io.swagger.client.model.InlineResponse2002;
 import io.swagger.client.model.Location;
 
 @Mapper
@@ -15,7 +14,7 @@ public interface WeatherForecastSearchMapper {
 	
 //	InlineResponse2002 select(String city, LocalDate date);
 	
-	InlineResponse2002 selectDay(String city, LocalDate date);
+	ForecastDay selectDay(String city, LocalDate date);
 	
 	List<ForecastHour> selectHour(String city, LocalDate date);
 		

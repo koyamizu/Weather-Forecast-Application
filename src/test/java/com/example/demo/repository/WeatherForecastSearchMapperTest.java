@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.testdata.DummyData;
 
+import io.swagger.client.model.ForecastDay;
 import io.swagger.client.model.ForecastForecastday;
 import io.swagger.client.model.ForecastHour;
 import io.swagger.client.model.InlineResponse2002;
@@ -41,7 +42,7 @@ public class WeatherForecastSearchMapperTest {
 	@Sql("DummyDatabaseWeatherForecast.sql")
 	@Test
 	void test_selectDay() {
-		InlineResponse2002 actual=mapper.selectDay("Tokyo", LocalDate.parse("2025-09-07"));
+		ForecastDay actual=mapper.selectDay("Tokyo", LocalDate.parse("2025-09-07"));
 		assertThat(actual).isNotNull();
 	}
 	

@@ -9,7 +9,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.demo.form.WeatherForecastSearchForm;
@@ -17,7 +16,7 @@ import com.example.demo.serivce.WeatherForecastSearchService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import io.swagger.client.model.InlineResponse2002;
+import io.swagger.client.model.ForecastForecastday;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -40,7 +39,7 @@ public class ViewController {
 //		binder.addValidators(this.weatherForecastSearchFormValidator);
 //	}
 
-	@PostMapping("result")
+	@GetMapping("result")
 	public String showResultView(@Validated WeatherForecastSearchForm form,
 			BindingResult bindingResult, Model model,RedirectAttributes attributes) throws JsonMappingException, JsonProcessingException {
 
@@ -49,13 +48,14 @@ public class ViewController {
 			return "redirect:/home";
 		}
 
-		InlineResponse2002 weatherForecast = service.findForecast(form.getCity(), form.getDate());
+		ForecastForecastday weatherForecast = service.findForecast(form.getCity(), form.getDate());
 
-		model.addAttribute(weatherForecast);
+		model.addAttribute("day",weatherForecast.getDay());
+		model.addAttribute("hours",weatherForecast.getHour());
 		model.addAttribute("date", form.getDate());
 		model.addAttribute("city", form.getCity());
 
-		return "home";
+		return "result";
 	}
 
 }

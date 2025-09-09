@@ -22,17 +22,19 @@
 	<!-- Condition -->
 	<resultMap id="ConditionResult" type="io.swagger.client.model.ForecastCondition">
 	  <id property="text" column="condition"/>
+	  <result property="icon" column="icon"/>
 	</resultMap>
 	
 	<!-- Condition -->
 	<resultMap id="DayConditionResult" type="io.swagger.client.model.ForecastDayCondition">
 	  <id property="text" column="day_condition"/>
+	  <result property="icon" column="icon"/>
 	</resultMap>
 	
 	<!-- Location -->
 	<resultMap id="LocationResult" type="io.swagger.client.model.Location">
 	  <id property="name" column="city"/>
-	  <result property="country" column="country"/>
+<!--	  <result property="country" column="country"/>-->
 	</resultMap>
 	
 	<!-- ForecastDay -->
@@ -58,6 +60,7 @@
 	<!-- ForecastForecastday -->
 	<resultMap id="ForecastForecastdayResult" type="io.swagger.client.model.ForecastForecastday">
 	  <id property="date" column="date" typeHandler="com.example.demo.utility.ThreeTenTypeHandler"/>
+<!--	  ↑↓ここでdayがdateを内包してないせいで、hourとテーブル結合した時に結果が24桁返ってきてしまう-->
 	  <association property="day" resultMap="ForecastDayResult"/>
 	  <collection property="hour" resultMap="ForecastHourResult"/>
 	</resultMap>
@@ -75,40 +78,41 @@
 	</resultMap>
 
 	
-	<select id="select" resultMap="LocationAndDayAndHourForecastResult">
-	  SELECT
-        d.date
-        ,d.city
-        ,d.country
-        ,d.max_temp
-        ,d.min_temp
-        ,d.avg_temp
-        ,d.avg_humidity
-        ,d.daily_chance_of_rain
-        ,d.condition AS day_condition
-        ,h.time
-	    ,h.temp
-	    ,h.humidity
-	    ,h.chance_of_rain
-	    ,h.condition
-      FROM
-        day_forecasts AS d
-        INNER JOIN
-          hour_forecasts AS h
-          ON d.city = h.city
-      WHERE
-        d.date = #{date}
-          AND d.city = #{city}
-	  ;
-	</select>
+<!--	<select id="select" resultMap="LocationAndDayAndHourForecastResult">-->
+<!--	  SELECT-->
+<!--        d.date-->
+<!--        ,d.city-->
+<!--        ,d.country-->
+<!--        ,d.max_temp-->
+<!--        ,d.min_temp-->
+<!--        ,d.avg_temp-->
+<!--        ,d.avg_humidity-->
+<!--        ,d.daily_chance_of_rain-->
+<!--        ,d.condition AS day_condition-->
+<!--        ,h.time-->
+<!--	    ,h.temp-->
+<!--	    ,h.humidity-->
+<!--	    ,h.chance_of_rain-->
+<!--	    ,h.condition-->
+<!--      FROM-->
+<!--        day_forecasts AS d-->
+<!--        INNER JOIN-->
+<!--          hour_forecasts AS h-->
+<!--          ON d.city = h.city-->
+<!--      WHERE-->
+<!--        d.date = #{date}-->
+<!--          AND d.city = #{city}-->
+<!--	  ;-->
+<!--	</select>-->
 	
 	<select id="selectHour" resultMap="ForecastHourResult">
 	  SELECT
 	    time
 	    ,city
-	    ,country
+<!--	    ,country-->
 	    ,temp
 	    ,condition
+	    ,icon
 	    ,chance_of_rain
 	    ,humidity
 	  FROM
@@ -119,15 +123,16 @@
 	  ;
 	</select>
 	
-	<select id="selectDay" resultMap="LocationAndDayAndHourForecastResult">
+	<select id="selectDay" resultMap="ForecastDayResult">
 	  SELECT
-        date
-        ,city
-        ,country
+<!--        date,-->
+        city
+<!--        ,country-->
         ,max_temp
         ,min_temp
         ,avg_temp
         ,condition AS day_condition
+        ,icon
         ,daily_chance_of_rain
         ,avg_humidity
       FROM
@@ -144,11 +149,12 @@
 	    (
 	      date
 	      ,city
-	      ,country
+<!--	      ,country-->
 	      ,max_temp
 	      ,min_temp
 	      ,avg_temp
 	      ,condition
+	      ,icon
 	      ,daily_chance_of_rain
 	      ,avg_humidity
 	    )
@@ -156,11 +162,12 @@
 	    (
 	    #{date}
 	    ,#{location.name}
-	    ,#{location.country}
+<!--	    ,#{location.country}-->
 	    ,#{day.maxtempC}
 	    ,#{day.mintempC}
 	    ,#{day.avgtempC}
 	    ,#{day.condition.text}
+	    ,#{day.condition.icon}
 	    ,#{day.dailyChanceOfRain}
 	    ,#{day.avghumidity}
 	    )
@@ -174,9 +181,10 @@
 	      date
 	      ,time
 	      ,city
-	      ,country
+<!--	      ,country-->
 	      ,temp
 	      ,condition
+	      ,icon
 	      ,chance_of_rain
 	      ,humidity
 	    )
@@ -186,9 +194,10 @@
 	    #{date}
 	    ,#{hour.time}
 	    ,#{location.name}
-	    ,#{location.country}
+<!--	    ,#{location.country}-->
 	    ,#{hour.tempC}
 	    ,#{hour.condition.text}
+	    ,#{hour.condition.icon}
 	    ,#{hour.chanceOfRain}
 	    ,#{hour.humidity}
 	    )
