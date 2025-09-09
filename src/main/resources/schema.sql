@@ -56,12 +56,12 @@ CREATE TABLE hour_forecasts(
 --        REFERENCES weather_conditions(code)
 );
 
-CREATE TABLE alerts(
-	alert_id INT AUTO_INCREMENT PRIMARY KEY
-	date date NOT NULL
-	,city VARCHAR(35) NOT NULL
-	,alert_text text NOT NULL
-);
+--CREATE TABLE alerts(
+--	alert_id INT AUTO_INCREMENT PRIMARY KEY
+--	date date NOT NULL
+--	,city VARCHAR(35) NOT NULL
+--	,alert_text text NOT NULL
+--);
 
 --天気情報が英語だったので、全て翻訳してテーブルに格納してcodeをもとに日本語表示をしようとしたが、
 --API自身が日本語に対応しているのでテーブルは不要。

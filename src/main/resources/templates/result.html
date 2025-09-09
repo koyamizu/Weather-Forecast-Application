@@ -20,6 +20,8 @@
 	<main>
 		<div class="container-sm-fluid">
 			<a th:href="@{/home}">戻る</a>
+			<a th:href="@{/alert-info/{city}/{date}(city=${city},date=${date})}">気象警報</a>
+			<p th:if="${error_message}" th:text="${error_message}" class="text-danger text-center"></p>
 			<h1 class="text-center" th:text="|${city}の${#temporals.format(date,'MM月dd日')}の天気|"></h1>
 			<div th:object="${day}" class="day-weather">
 				<img th:src="|https://cdn.weatherapi.com/weather/64x64/*{condition.icon}.png|" alt="1日の天気の画像"
@@ -33,25 +35,25 @@
 					<div>平均湿度&nbsp;&nbsp;<span th:text="*{avghumidity}"></span>%</div>
 				</div>
 			</div>
-			<table border="1" class="table-bordered col-sm" style="margin:0 auto; width:70%">
+			<table border="1" class="table-bordered my-4" style="margin:0 auto" >
 				<tr class="bg-info">
 					<th>時刻</th>
 					<th>天気</th>
 					<th>気温</th>
 					<th>湿度</th>
-					<th>降水確率</th>
+					<th class="fs-md">降水確率</th>
 				</tr>
 				<tr th:each="hour : ${hours}" th:object="${hour}">
 					<td th:text="*{time}"></td>
 					<td>
-						<div>
+						<div class="d-flex flex-column flex-md-row align-items-center justify-content-center" >
 							<img th:src="|https://cdn.weatherapi.com/weather/64x64/*{condition.icon}.png|"
-								alt="1時間ごとの天気の画像" />
-							<span th:text="*{condition.text}"></span>
+								alt="1時間ごとの天気の画像" class="img-fluid"/>
+							<span th:text="*{condition.text}" class="ms-md-2 mt-2 mt-md-0"></span>
 						</div>
 					</td>
 					<td th:text="*{tempC}"></td>
-					<td th:text="*{humidity}"></td>
+					<td th:text="*{#numbers.formatDecimal(humidity,2,0)}"></td>
 					<td th:text="*{chanceOfRain}" th:classappend="*{chanceOfRain>0}? 'text-primary'"></td>
 				</tr>
 			</table>

@@ -1,8 +1,10 @@
 package com.example.demo.serivce.Impl;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import io.swagger.client.ApiException;
+import io.swagger.client.model.AlertsAlert;
 import io.swagger.client.model.ForecastDay;
 import io.swagger.client.model.ForecastForecastday;
 import io.swagger.client.model.ForecastHour;
@@ -29,7 +32,7 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 	@Override
 	@Transactional
 	public ForecastForecastday findForecast(String city, java.time.LocalDate date)
-			throws JsonMappingException, JsonProcessingException {
+			throws JsonMappingException, JsonProcessingException, ApiException {
 		ForecastForecastday forecastDay = new ForecastForecastday();
 
 		ForecastDay forecast = weatherForecastSearchMapper.selectDay(city, date);
@@ -55,13 +58,20 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 			weatherForecastSearchMapper.insertDay(date, location, day);
 			weatherForecastSearchMapper.insertHour(date, location, hours);
 
-		} catch (ApiException e) {
-			System.err.println("Exception when calling ApisApi#astronomy");
+		} catch (DataAccessException e) {
+//			DataAccessExceptionはRuntimeExceptionのサブクラスであり、このメソッドはトランザクションを宣言しているので、
+//			insertDay()とinsertHour()はロールバックされます。
+			System.err.println("データアクセスにおいて例外が発生しました。");
 			e.printStackTrace();
-			//TODO RuntimeExceiptionを投げる
 		}
-		//DBアクセスに失敗しても、とりあえず結果だけはクライアントに返して、ログ表示を行う
 		return forecastDay;
 	}
+
+	@Override
+	public List<AlertsAlert> findAlerts(String city, LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException {
+		String dateStr = date.toString();
+		WeatherApiClient client = new WeatherApiClient(city, dateStr);
+		return client.fetchAlerts().getAlerts().getAlert();
+		}
 
 }
