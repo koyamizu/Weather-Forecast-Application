@@ -31,7 +31,7 @@ public class ViewController {
 	private final WeatherForecastSearchService service;
 //	private final WeatherForecastSearchFormValidator weatherForecastSearchFormValidator;
 
-	@GetMapping("home")
+	@GetMapping
 	public String showHomeView(WeatherForecastSearchForm weatherForecastSearchForm, Model model) {
 		List<LocalDate> dates = IntStream.range(0, 16)
 				.mapToObj(LocalDate.now()::plusDays).toList();

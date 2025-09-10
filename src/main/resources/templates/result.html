@@ -19,7 +19,7 @@
 	</header>
 	<main>
 		<div class="container-sm-fluid">
-			<a th:href="@{/home}">戻る</a>
+			<a th:href="@{/}">戻る</a>
 			<a th:href="@{/alert-info/{city}/{date}(city=${city},date=${date})}">気象警報</a>
 			<p th:if="${error_message}" th:text="${error_message}" class="text-danger text-center"></p>
 			<h1 class="text-center" th:text="|${city}の${#temporals.format(date,'MM月dd日')}の天気|"></h1>
