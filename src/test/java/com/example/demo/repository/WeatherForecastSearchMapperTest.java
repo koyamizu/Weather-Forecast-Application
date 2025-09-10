@@ -43,13 +43,15 @@ public class WeatherForecastSearchMapperTest {
 	@Test
 	void test_selectDay() {
 		ForecastDay actual=mapper.selectDay("Tokyo", LocalDate.parse("2025-09-07"));
-		assertThat(actual).isNotNull();
+		InlineResponse2002 resp=DummyData.createTokyoForecast();
+		assertThat(actual).isEqualTo(resp.getForecast().getForecastday().get(0).getDay());
 	}
 	
 	@Sql("DummyDatabaseWeatherForecast.sql")
 	@Test
 	void test_selectHour() {
 		List<ForecastHour> actual=mapper.selectHour("Tokyo", LocalDate.parse("2025-09-07"));
-		assertThat(actual).isNotEmpty();
+		InlineResponse2002 resp=DummyData.createTokyoForecast();
+		assertThat(actual).isEqualTo(resp.getForecast().getForecastday().get(0).getHour());
 	}
 }

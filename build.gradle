@@ -29,6 +29,12 @@ repositories {
             password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
         }
     }
+    maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+
+ext {
+  set('springAiVersion', "1.0.1")
 }
 
 dependencies {
@@ -36,6 +42,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
+	implementation 'com.github.bufferings:thymeleaf-extras-nl2br:1.0.2'
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	implementation 'io.swagger:swagger-java-client:1.0.0'
     implementation group: 'org.threeten', name: 'threetenbp', version: '1.7.2'
 //    implementation("com.ibm.icu:icu4j:77.1")
@@ -47,6 +55,12 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.5'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+  }
 }
 
 tasks.named('test') {
