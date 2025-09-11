@@ -3,11 +3,13 @@ package com.example.demo.serivce.Impl;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.entity.LocationData;
 import com.example.demo.entity.WeatherApiClient;
 import com.example.demo.repository.WeatherForecastSearchMapper;
 import com.example.demo.serivce.WeatherForecastSearchService;
@@ -20,7 +22,6 @@ import io.swagger.client.model.ForecastDay;
 import io.swagger.client.model.ForecastForecastday;
 import io.swagger.client.model.ForecastHour;
 import io.swagger.client.model.InlineResponse2002;
-import io.swagger.client.model.Location;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,36 +32,40 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 
 	@Override
 	@Transactional
-	public ForecastForecastday findForecast(String city, java.time.LocalDate date)
+	public ForecastForecastday findForecast(Optional<LocationData> location, LocalDate date)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 		ForecastForecastday forecastDay = new ForecastForecastday();
 
-		ForecastDay forecast = weatherForecastSearchMapper.selectDay(city, date);
+		String cityRegionRomaji = location.orElse(null).getCityRegionRomaji();
+
+		ForecastDay forecast = weatherForecastSearchMapper.selectDay(cityRegionRomaji, date);
 
 		if (!Objects.equals(null, forecast)) {
-			List<ForecastHour> hours = weatherForecastSearchMapper.selectHour(city, date);
+			List<ForecastHour> hours = weatherForecastSearchMapper.selectHour(cityRegionRomaji, date);
 			forecastDay.setDay(forecast);
 			forecastDay.setHour(hours);
 			return forecastDay;
 		}
 
+		String latlon = location.orElse(null).getLatlon();
+
 		String dateStr = date.toString();
-		WeatherApiClient client = new WeatherApiClient(city, dateStr);
+		WeatherApiClient client = new WeatherApiClient(latlon, dateStr);
 
 		try {
 			InlineResponse2002 resp = client.fetchWeather();
 
-			Location location = resp.getLocation();
 			forecastDay = resp.getForecast().getForecastday().get(0);
 			ForecastDay day = forecastDay.getDay();
 			List<ForecastHour> hours = forecastDay.getHour();
 
-			weatherForecastSearchMapper.insertDay(date, location, day);
-			weatherForecastSearchMapper.insertHour(date, location, hours);
+			String cityRegion = location.orElse(null).getCityRegionRomaji();
+			weatherForecastSearchMapper.insertDay(date, cityRegionRomaji, cityRegion, day);
+			weatherForecastSearchMapper.insertHour(date, cityRegionRomaji, cityRegion, hours);
 
 		} catch (DataAccessException e) {
-//			DataAccessExceptionはRuntimeExceptionのサブクラスであり、このメソッドはトランザクションを宣言しているので、
-//			insertDay()とinsertHour()はロールバックされます。
+			//			DataAccessExceptionはRuntimeExceptionのサブクラスであり、このメソッドはトランザクションを宣言しているので、
+			//			DataAccessExceptionが放出されるとinsertDay()とinsertHour()はロールバックされます。
 			System.err.println("データアクセスにおいて例外が発生しました。");
 			e.printStackTrace();
 		}
@@ -68,10 +73,13 @@ public class WeatherForecastSearchServiceImp implements WeatherForecastSearchSer
 	}
 
 	@Override
-	public List<AlertsAlert> findAlerts(String city, LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException {
+	public String findAlerts(String city, LocalDate date)
+			throws JsonMappingException, JsonProcessingException, ApiException {
 		String dateStr = date.toString();
 		WeatherApiClient client = new WeatherApiClient(city, dateStr);
-		return client.fetchAlerts().getAlerts().getAlert();
-		}
+		List<AlertsAlert> alerts=client.fetchAlerts().getAlerts().getAlert();
+//		String alert=GPTにAlertsを翻訳、要約してもらうメソッド(alerts);
+		return null;
+	}
 
 }

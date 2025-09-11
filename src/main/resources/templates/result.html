@@ -22,7 +22,7 @@
 			<a th:href="@{/}">戻る</a>
 			<a th:href="@{/alert-info/{city}/{date}(city=${city},date=${date})}">気象警報</a>
 			<p th:if="${error_message}" th:text="${error_message}" class="text-danger text-center"></p>
-			<h1 class="text-center" th:text="|${city}の${#temporals.format(date,'MM月dd日')}の天気|"></h1>
+			<h1 class="text-center" th:text="|${input}の${#temporals.format(date,'MM月dd日')}の天気|"></h1>
 			<div th:object="${day}" class="day-weather">
 				<img th:src="|https://cdn.weatherapi.com/weather/64x64/*{condition.icon}.png|" alt="1日の天気の画像"
 					width="144" height="144" class="float-start" />

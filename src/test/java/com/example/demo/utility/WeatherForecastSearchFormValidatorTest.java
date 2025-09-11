@@ -27,7 +27,7 @@ public class WeatherForecastSearchFormValidatorTest {
 		MockitoAnnotations.openMocks(this);
 		form=new WeatherForecastSearchForm();
 		result=new BindException(form,"WeatherForecastSearchForm");
-		form.setCity("東京");
+		form.setInput("東京");
 	}
 	
 	@Test

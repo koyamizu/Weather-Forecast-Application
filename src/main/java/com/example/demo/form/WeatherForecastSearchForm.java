@@ -16,6 +16,6 @@ public class WeatherForecastSearchForm {
 	@NotNull
 	private LocalDate date;
 	@NotNull
-	private String city;
+	private String input;
 	
 }

@@ -29,14 +29,14 @@ public class WeatherForecastSearchMapperTest {
 	void test_insertDay() {
 		InlineResponse2002 resp=DummyData.createTokyoForecast();
 		ForecastForecastday ffd= resp.getForecast().getForecastday().get(0);
-		mapper.insertDay(LocalDate.parse(ffd.getDate().toString()), resp.getLocation(), ffd.getDay());
+		mapper.insertDay(LocalDate.parse(ffd.getDate().toString()), resp.getLocation().getName(), null, ffd.getDay());
 	}
 	
 	@Test
 	void test_insertTime() {
 		InlineResponse2002 resp=DummyData.createTokyoForecast();
 		ForecastForecastday ffd= resp.getForecast().getForecastday().get(0);
-		mapper.insertHour(LocalDate.parse(ffd.getDate().toString()),resp.getLocation(), ffd.getHour());
+		mapper.insertHour(LocalDate.parse(ffd.getDate().toString()),resp.getLocation().getName(), null, ffd.getHour());
 	}
 	
 	@Sql("DummyDatabaseWeatherForecast.sql")

@@ -105,6 +105,7 @@
 <!--	  ;-->
 <!--	</select>-->
 	
+<!--	cityの値のバインド方法を変える。Location→直でString-->
 	<select id="selectHour" resultMap="ForecastHourResult">
 	  SELECT
 	    time
@@ -161,7 +162,7 @@
 	  VALUES
 	    (
 	    #{date}
-	    ,#{location.name}
+	    ,#{location}
 <!--	    ,#{location.country}-->
 	    ,#{day.maxtempC}
 	    ,#{day.mintempC}
@@ -193,7 +194,7 @@
 	    (
 	    #{date}
 	    ,#{hour.time}
-	    ,#{location.name}
+	    ,#{location}
 <!--	    ,#{location.country}-->
 	    ,#{hour.tempC}
 	    ,#{hour.condition.text}
