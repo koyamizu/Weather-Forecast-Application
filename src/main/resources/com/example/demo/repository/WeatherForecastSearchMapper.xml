@@ -25,16 +25,19 @@
 	  <result property="icon" column="icon"/>
 	</resultMap>
 	
-	<!-- Condition -->
+	<!-- DayCondition -->
 	<resultMap id="DayConditionResult" type="io.swagger.client.model.ForecastDayCondition">
 	  <id property="text" column="day_condition"/>
 	  <result property="icon" column="icon"/>
 	</resultMap>
 	
-	<!-- Location -->
-	<resultMap id="LocationResult" type="io.swagger.client.model.Location">
-	  <id property="name" column="city"/>
-<!--	  <result property="country" column="country"/>-->
+<!--	 Location -->
+	<resultMap id="LocationDataResult" type="com.example.demo.entity.LocationData">
+	  <id property="id" column="id"/>
+	  <result property="input" column="input"/>
+	  <result property="cityRegion" column="city_region"/>
+	  <result property="cityRegionRomaji" column="city_region_romaji"/>
+	  <result property="latlon" column="latlon"/>
 	</resultMap>
 	
 	<!-- ForecastDay -->
@@ -57,25 +60,25 @@
 	  <association property="condition" resultMap="ConditionResult"/>
 	</resultMap>
 	
-	<!-- ForecastForecastday -->
-	<resultMap id="ForecastForecastdayResult" type="io.swagger.client.model.ForecastForecastday">
-	  <id property="date" column="date" typeHandler="com.example.demo.utility.ThreeTenTypeHandler"/>
+<!--	 ForecastForecastday -->
+<!--	<resultMap id="ForecastForecastdayResult" type="io.swagger.client.model.ForecastForecastday">-->
+<!--	  <id property="date" column="date" typeHandler="com.example.demo.utility.ThreeTenTypeHandler"/>-->
 <!--	  ↑↓ここでdayがdateを内包してないせいで、hourとテーブル結合した時に結果が24桁返ってきてしまう-->
-	  <association property="day" resultMap="ForecastDayResult"/>
-	  <collection property="hour" resultMap="ForecastHourResult"/>
-	</resultMap>
+<!--	  <association property="day" resultMap="ForecastDayResult"/>-->
+<!--	  <collection property="hour" resultMap="ForecastHourResult"/>-->
+<!--	</resultMap>-->
 	
-	<!-- Forecast -->
-	<resultMap id="ForecastResult" type="io.swagger.client.model.Forecast">
-	  <collection property="forecastday" resultMap="ForecastForecastdayResult"/>
-	</resultMap>
+<!--	 Forecast -->
+<!--	<resultMap id="ForecastResult" type="io.swagger.client.model.Forecast">-->
+<!--	  <collection property="forecastday" resultMap="ForecastForecastdayResult"/>-->
+<!--	</resultMap>-->
 	
-	<!-- InlineResponse2002  -->
-	<resultMap id="LocationAndDayAndHourForecastResult"
-	           type="io.swagger.client.model.InlineResponse2002">
-	  <association property="location" resultMap="LocationResult"/>
-	  <association property="forecast" resultMap="ForecastResult"/>
-	</resultMap>
+<!--	 InlineResponse2002  -->
+<!--	<resultMap id="LocationAndDayAndHourForecastResult"-->
+<!--	           type="io.swagger.client.model.InlineResponse2002">-->
+<!--	  <association property="location" resultMap="LocationResult"/>-->
+<!--	  <association property="forecast" resultMap="ForecastResult"/>-->
+<!--	</resultMap>-->
 
 	
 <!--	<select id="select" resultMap="LocationAndDayAndHourForecastResult">-->
@@ -108,9 +111,10 @@
 <!--	cityの値のバインド方法を変える。Location→直でString-->
 	<select id="selectHour" resultMap="ForecastHourResult">
 	  SELECT
-	    time
-	    ,city
-<!--	    ,country-->
+	    date
+	    ,time
+	    ,city_region
+	    ,city_region_romaji
 	    ,temp
 	    ,condition
 	    ,icon
@@ -126,13 +130,13 @@
 	
 	<select id="selectDay" resultMap="ForecastDayResult">
 	  SELECT
-<!--        date,-->
-        city
-<!--        ,country-->
+        date
+        ,city_region
+        ,city_region_romaji
         ,max_temp
         ,min_temp
         ,avg_temp
-        ,condition AS day_condition
+        ,condition
         ,icon
         ,daily_chance_of_rain
         ,avg_humidity
@@ -144,13 +148,26 @@
 	  ;
 	</select>
 	
+	<select id="selectLocations" resultMap="LocationDataResult">
+	  SELECT
+        input
+        ,city_region
+        ,city_region_romaji
+        ,latlon
+      FROM
+        locations
+      WHERE
+        input = #{input}
+	  ;
+	</select>
+	
 	<insert id="insertDay">
 	  INSERT INTO
 	    day_forecasts
 	    (
 	      date
-	      ,city
-<!--	      ,country-->
+	      ,city_region
+	      ,city_region_romaji
 	      ,max_temp
 	      ,min_temp
 	      ,avg_temp
@@ -162,8 +179,8 @@
 	  VALUES
 	    (
 	    #{date}
-	    ,#{location}
-<!--	    ,#{location.country}-->
+	    ,#{cityRegion}
+	    ,#{cityRegionRomaji}
 	    ,#{day.maxtempC}
 	    ,#{day.mintempC}
 	    ,#{day.avgtempC}
@@ -181,8 +198,8 @@
 	    (
 	      date
 	      ,time
-	      ,city
-<!--	      ,country-->
+	      ,city_region
+	      ,city_region_romaji
 	      ,temp
 	      ,condition
 	      ,icon
@@ -194,13 +211,34 @@
 	    (
 	    #{date}
 	    ,#{hour.time}
-	    ,#{location}
-<!--	    ,#{location.country}-->
+	    ,#{cityRegion}
+	    ,#{cityRegionRomaji}
 	    ,#{hour.tempC}
 	    ,#{hour.condition.text}
 	    ,#{hour.condition.icon}
 	    ,#{hour.chanceOfRain}
 	    ,#{hour.humidity}
+	    )
+	    </foreach>
+	  ;
+	</insert>
+	
+	<insert id="insertLocations">
+	  INSERT INTO
+	    locations
+	    (
+        input
+        ,city_region
+        ,city_region_romaji
+        ,latlon
+	    )
+	  VALUES
+	  <foreach collection="locations" item="l" separator=",">
+	    (
+	    #{l.input}
+	    ,#{l.cityRegion}
+	    ,#{l.cityRegionRomaji}
+	    ,#{l.latlon}
 	    )
 	    </foreach>
 	  ;

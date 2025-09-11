@@ -11,12 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.entity.LocationData;
 import com.example.demo.testdata.DummyData;
 
 import io.swagger.client.model.ForecastDay;
-import io.swagger.client.model.ForecastForecastday;
 import io.swagger.client.model.ForecastHour;
-import io.swagger.client.model.InlineResponse2002;
 
 @MybatisTest
 @Transactional
@@ -27,31 +26,48 @@ public class WeatherForecastSearchMapperTest {
 	
 	@Test
 	void test_insertDay() {
-		InlineResponse2002 resp=DummyData.createTokyoForecast();
-		ForecastForecastday ffd= resp.getForecast().getForecastday().get(0);
-		mapper.insertDay(LocalDate.parse(ffd.getDate().toString()), resp.getLocation().getName(), null, ffd.getDay());
+		LocationData location=DummyData.createLocationData().get(0);
+		ForecastDay dummy=DummyData.createForecastDay();
+		mapper.insertDay(LocalDate.now(), location.getCityRegion(), location.getCityRegionRomaji(),dummy);
 	}
 	
 	@Test
 	void test_insertTime() {
-		InlineResponse2002 resp=DummyData.createTokyoForecast();
-		ForecastForecastday ffd= resp.getForecast().getForecastday().get(0);
-		mapper.insertHour(LocalDate.parse(ffd.getDate().toString()),resp.getLocation().getName(), null, ffd.getHour());
+		LocationData location=DummyData.createLocationData().get(0);
+		List<ForecastHour> dummies=DummyData.createForecastHour();
+		mapper.insertHour(LocalDate.now(), location.getCityRegion(), location.getCityRegionRomaji(),dummies);
+	}
+	
+	@Test
+	void test_inesrtLocations() {
+		List<LocationData> locations=DummyData.createLocationData();
+		mapper.insertLocations(locations);
 	}
 	
 	@Sql("DummyDatabaseWeatherForecast.sql")
 	@Test
 	void test_selectDay() {
-		ForecastDay actual=mapper.selectDay("Tokyo", LocalDate.parse("2025-09-07"));
-		InlineResponse2002 resp=DummyData.createTokyoForecast();
-		assertThat(actual).isEqualTo(resp.getForecast().getForecastday().get(0).getDay());
+		ForecastDay expected=DummyData.createForecastDay();
+		ForecastDay actual=mapper.selectDay("Shijuku-ku-Tokyo-to", LocalDate.parse("2025-09-07"));
+		assertThat(actual).isEqualTo(expected);
 	}
 	
 	@Sql("DummyDatabaseWeatherForecast.sql")
 	@Test
 	void test_selectHour() {
-		List<ForecastHour> actual=mapper.selectHour("Tokyo", LocalDate.parse("2025-09-07"));
-		InlineResponse2002 resp=DummyData.createTokyoForecast();
-		assertThat(actual).isEqualTo(resp.getForecast().getForecastday().get(0).getHour());
+		List<ForecastHour> expected=DummyData.createForecastHour();
+		List<ForecastHour> actual=mapper.selectHour("Shijuku-ku-Tokyo-to", LocalDate.parse("2025-09-07"));
+		assertThat(actual).isEqualTo(expected);
+	}
+	
+	@Sql("DummyDatabaseWeatherForecast.sql")
+	@Test
+	void test_selectLocations() {
+		List<LocationData> locations=mapper.selectLocations("草津");
+		List<LocationData> expecteds=List.of(
+				new LocationData("草津","草津市-滋賀県","Kusatsu-shi-Shiga-ken","35.0094,135.9369")
+				,new LocationData("草津","草津町-群馬県","Kusatsu-machi-Gunma-ken", "36.6269,138.6119")
+				);
+		assertThat(locations).isEqualTo(expecteds);
 	}
 }

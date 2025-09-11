@@ -18,6 +18,19 @@
 		<header>
 		</header>
 		<main>
+			<form id="select_form" th:if="${confirm_message} != null" th:action="@{/result}" method="get">
+				<input type="hidden" name="date" th:value="${date}" />
+				<div th:each="choice:${choices}">
+					<input type="radio" th:value="${choise}">
+				</div>
+			</form>
+
+			<script th:if="${confirmMessage} != null" th:inline="javascript">
+				let ret = window.confirm(/*[[${confirm_message}]]*/);
+				if (ret) {
+					document.getElementById('select_form').submit();
+				}
+			</script>
 			<h1 class="text-center">天気予報検索</h1>
 			<div class="well">
 				<form th:action="@{/result}" th:object="${weatherForecastSearchForm}" method="get"

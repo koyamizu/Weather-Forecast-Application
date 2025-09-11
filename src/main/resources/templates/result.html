@@ -18,6 +18,9 @@
 	<header>
 	</header>
 	<main>
+		<script th:if="${alert_message} != null" th:inline="javascript">
+			window.confirm(/*[[${alert_message}]]*/);
+		</script>
 		<div class="container-sm-fluid">
 			<a th:href="@{/}">戻る</a>
 			<a th:href="@{/alert-info/{city}/{date}(city=${city},date=${date})}">気象警報</a>

@@ -22,9 +22,7 @@ import com.example.demo.entity.LocationData;
 import com.example.demo.form.WeatherForecastSearchForm;
 import com.example.demo.serivce.WeatherForecastSearchService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.client.ApiException;
 import io.swagger.client.model.ForecastForecastday;
@@ -53,14 +51,8 @@ public class WeatherForecastController {
 			attributes.addFlashAttribute(bindingResult.getAllErrors());
 			return "redirect:/";
 		}
-		//ここから下はドメインオブジェクトとして独立させる
-		String gptResponse/* =入力値からJSONを返すメソッドを呼び出す。*/="Resp";
 
-		ObjectMapper mapper = new ObjectMapper();
-		List<LocationData> locations = mapper.readValue(gptResponse,
-				new TypeReference<List<LocationData>>() {
-				});
-		//↑ここまで
+		List<LocationData> locations = service.findLocationData(form.getInput());
 
 		if (locations.isEmpty()) {
 			attributes.addAttribute("error_message", "入力された地点は検索ができませんでした。");
@@ -71,9 +63,10 @@ public class WeatherForecastController {
 
 		if (locations.size() > 1) {
 			List<String> choices = locations.stream().map(LocationData::getCityRegion).toList();
-			model.addAttribute("error_message", "複数の候補が存在します。検索する地点を選択してください。");
-			model.addAttribute("choices", choices);
-			return "making-choices";
+			attributes.addFlashAttribute("confirm_message", "複数の候補が存在します。検索する地点を選択してください");
+			attributes.addFlashAttribute("choices", choices);
+			attributes.addFlashAttribute("date", form.getDate());
+			return "redirect:/";
 		}
 		attributes.addAttribute("cityRegion", locations.get(0).getCityRegion());
 		attributes.addAttribute("date", form.getDate());
@@ -109,15 +102,23 @@ public class WeatherForecastController {
 
 		String alert = service.findAlerts(latlon, date);
 
+		//		if (Objects.equals(alert, null)) {
+		//			attributes.addFlashAttribute("error_message", "発表中の気象警報はありません");
+		//			String referer = request.getHeader("Referer");
+		//			return "redirect:" + referer;
+		//		}
+		//
+		//		model.addAttribute("alerts", alert);
+
+		String referer = request.getHeader("Referer");
+
 		if (Objects.equals(alert, null)) {
-			attributes.addFlashAttribute("error_message", "発表中の気象警報はありません");
-			String referer = request.getHeader("Referer");
+			attributes.addFlashAttribute("alert_message", "発表中の気象警報はありません");
 			return "redirect:" + referer;
 		}
 
-		model.addAttribute("alerts", alert);
-
-		return "alert-info";
+		attributes.addFlashAttribute("error_message", alert);
+		return "redirect:" + referer;
 	}
 
 }

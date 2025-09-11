@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import com.example.demo.entity.LocationData;
+
 import io.swagger.client.model.ForecastDay;
 import io.swagger.client.model.ForecastHour;
 
@@ -17,8 +19,11 @@ public interface WeatherForecastSearchMapper {
 	
 	List<ForecastHour> selectHour(String city, LocalDate date);
 	
-	//TODO location→cityRegionRomajiに書き換える。また、cityRegionも引数として追加。
-	void insertDay(LocalDate date, String location,String cityRegion, ForecastDay day);
+	List<LocationData> selectLocations(String input);
 	
-	void insertHour(LocalDate date, String location,String cityRegion, List<ForecastHour> hours);
+	void insertDay(LocalDate date, String cityRegion,String cityRegionRomaji, ForecastDay day);
+	
+	void insertHour(LocalDate date, String cityRegion,String cityRegionRomaji, List<ForecastHour> hours);
+	
+	void insertLocations(List<LocationData> locations);
 }
