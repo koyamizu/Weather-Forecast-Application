@@ -5,28 +5,49 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>検索結果</title>
-	<!--	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+	<!--		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
 	<link rel="stylesheet" th:href="@{/css/style.css}">
 	<link rel="preconnect" href="https://cdn.weatherapi.com">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-	<!--	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>-->
-	<!--	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+	<!--		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>-->
+	<!--		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
 </head>
 
 <body>
 	<header>
+		<nav class="navbar bg-body-tertiary">
+			<div class="container justify-content-center">
+				<ul class="navbar-nav flex-row gap-3">
+					<li class="nav-item">
+						<a class="nav-link active px-3" aria-current="page" th:href="@{/}">戻る</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link px-3"
+							th:href="@{/alert-info/{latlon}/{date}(latlon=${location.latlon},date=${date})}">
+							気象警報
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
 	</header>
 	<main>
 		<script th:if="${alert_message} != null" th:inline="javascript">
 			window.confirm(/*[[${alert_message}]]*/);
 		</script>
 		<div class="container-sm-fluid">
-			<a th:href="@{/}">戻る</a>
-			<a th:href="@{/alert-info/{city}/{date}(city=${city},date=${date})}">気象警報</a>
 			<p th:if="${error_message}" th:text="${error_message}" class="text-danger text-center"></p>
-			<h1 class="text-center" th:text="|${input}の${#temporals.format(date,'MM月dd日')}の天気|"></h1>
-			<div th:object="${day}" class="day-weather">
+			<!--			<h1 class="text-center" th:text="|${location.input}(${location.cityRegion})の${#temporals.format(date,'MM月dd日')}の天気|"-->
+			<!--			style="font-size: clamp(1.2rem, 5vw, 2.5rem);"></h1>-->
+			<h1 class="text-center mx-5 my-3">
+				<span th:text="|${#temporals.format(date,'M月d日')}の天気|"></span>
+			</h1>
+			<h3 class="text-center mx-5">
+				<span th:text="|@${location.input}" |></span>
+				<span class="fs-5" th:text="|(${location.cityRegion})|"></span>
+			</h3>
+			<div th:object="${day}" class="day-weather mt-3">
 				<img th:src="|https://cdn.weatherapi.com/weather/64x64/*{condition.icon}.png|" alt="1日の天気の画像"
 					width="144" height="144" class="float-start" />
 				<div class="float-none text-center">
@@ -38,7 +59,7 @@
 					<div>平均湿度&nbsp;&nbsp;<span th:text="*{avghumidity}"></span>%</div>
 				</div>
 			</div>
-			<table border="1" class="table-bordered my-4" style="margin:0 auto" >
+			<table border="1" class="table-bordered my-4" style="margin:0 auto">
 				<tr class="bg-info">
 					<th>時刻</th>
 					<th>天気</th>
@@ -49,9 +70,9 @@
 				<tr th:each="hour : ${hours}" th:object="${hour}">
 					<td th:text="*{time}"></td>
 					<td>
-						<div class="d-flex flex-column flex-md-row align-items-center justify-content-center" >
+						<div class="d-flex flex-column flex-md-row align-items-center justify-content-center">
 							<img th:src="|https://cdn.weatherapi.com/weather/64x64/*{condition.icon}.png|"
-								alt="1時間ごとの天気の画像" class="img-fluid"/>
+								alt="1時間ごとの天気の画像" class="img-fluid" />
 							<span th:text="*{condition.text}" class="ms-md-2 mt-2 mt-md-0"></span>
 						</div>
 					</td>

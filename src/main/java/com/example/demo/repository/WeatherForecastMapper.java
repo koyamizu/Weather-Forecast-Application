@@ -11,19 +11,19 @@ import io.swagger.client.model.ForecastDay;
 import io.swagger.client.model.ForecastHour;
 
 @Mapper
-public interface WeatherForecastSearchMapper {
+public interface WeatherForecastMapper {
 	
 //	InlineResponse2002 select(String city, LocalDate date);
 	
-	ForecastDay selectDay(String city, LocalDate date);
+	ForecastDay selectDay(String cityRegion, LocalDate date);
 	
-	List<ForecastHour> selectHour(String city, LocalDate date);
+	List<ForecastHour> selectHour(String cityRegion, LocalDate date);
 	
 	List<LocationData> selectLocations(String input);
 	
-	void insertDay(LocalDate date, String cityRegion,String cityRegionRomaji, ForecastDay day);
+	void insertDay(LocalDate date, String cityRegion,ForecastDay day);
 	
-	void insertHour(LocalDate date, String cityRegion,String cityRegionRomaji, List<ForecastHour> hours);
+	void insertHour(LocalDate date, String cityRegion,List<ForecastHour> hours);
 	
 	void insertLocations(List<LocationData> locations);
 }

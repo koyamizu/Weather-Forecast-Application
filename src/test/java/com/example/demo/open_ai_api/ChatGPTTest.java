@@ -20,7 +20,7 @@ public class ChatGPTTest {
 	@Test
 	void test_structureLocation() {
 		long startTime = System.currentTimeMillis();
-		LocationDataWrapper response = chatGPT.structureLocation("モン・サン・ミシェル");
+		LocationDataWrapper response = chatGPT.structureLocation("第三東京市");
 		List<LocationData> location = response.getLocations();
 		//		String note=response.getNote();
 		System.out.println(location.toString());

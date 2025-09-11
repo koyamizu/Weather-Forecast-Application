@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper
-	namespace="com.example.demo.repository.WeatherForecastSearchMapper">
+	namespace="com.example.demo.repository.WeatherForecastMapper">
 		
 <!--	 Date -->
 <!--	 標準ライブラリのLocalDateではないので、変換が必要-->
@@ -27,7 +27,7 @@
 	
 	<!-- DayCondition -->
 	<resultMap id="DayConditionResult" type="io.swagger.client.model.ForecastDayCondition">
-	  <id property="text" column="day_condition"/>
+	  <id property="text" column="condition"/>
 	  <result property="icon" column="icon"/>
 	</resultMap>
 	
@@ -36,7 +36,6 @@
 	  <id property="id" column="id"/>
 	  <result property="input" column="input"/>
 	  <result property="cityRegion" column="city_region"/>
-	  <result property="cityRegionRomaji" column="city_region_romaji"/>
 	  <result property="latlon" column="latlon"/>
 	</resultMap>
 	
@@ -114,7 +113,6 @@
 	    date
 	    ,time
 	    ,city_region
-	    ,city_region_romaji
 	    ,temp
 	    ,condition
 	    ,icon
@@ -124,7 +122,7 @@
 	    hour_forecasts
       WHERE
         date = #{date}
-        AND city = #{city}
+        AND city_region = #{cityRegion}
 	  ;
 	</select>
 	
@@ -132,7 +130,6 @@
 	  SELECT
         date
         ,city_region
-        ,city_region_romaji
         ,max_temp
         ,min_temp
         ,avg_temp
@@ -144,7 +141,7 @@
         day_forecasts
       WHERE
         date = #{date}
-        AND city = #{city}
+        AND city_region = #{cityRegion}
 	  ;
 	</select>
 	
@@ -152,7 +149,6 @@
 	  SELECT
         input
         ,city_region
-        ,city_region_romaji
         ,latlon
       FROM
         locations
@@ -167,7 +163,6 @@
 	    (
 	      date
 	      ,city_region
-	      ,city_region_romaji
 	      ,max_temp
 	      ,min_temp
 	      ,avg_temp
@@ -180,7 +175,6 @@
 	    (
 	    #{date}
 	    ,#{cityRegion}
-	    ,#{cityRegionRomaji}
 	    ,#{day.maxtempC}
 	    ,#{day.mintempC}
 	    ,#{day.avgtempC}
@@ -199,7 +193,6 @@
 	      date
 	      ,time
 	      ,city_region
-	      ,city_region_romaji
 	      ,temp
 	      ,condition
 	      ,icon
@@ -212,7 +205,6 @@
 	    #{date}
 	    ,#{hour.time}
 	    ,#{cityRegion}
-	    ,#{cityRegionRomaji}
 	    ,#{hour.tempC}
 	    ,#{hour.condition.text}
 	    ,#{hour.condition.icon}
@@ -229,7 +221,6 @@
 	    (
         input
         ,city_region
-        ,city_region_romaji
         ,latlon
 	    )
 	  VALUES
@@ -237,7 +228,6 @@
 	    (
 	    #{l.input}
 	    ,#{l.cityRegion}
-	    ,#{l.cityRegionRomaji}
 	    ,#{l.latlon}
 	    )
 	    </foreach>

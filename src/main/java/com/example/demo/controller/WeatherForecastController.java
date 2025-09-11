@@ -20,7 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.demo.entity.LocationData;
 import com.example.demo.form.WeatherForecastSearchForm;
-import com.example.demo.serivce.WeatherForecastSearchService;
+import com.example.demo.serivce.WeatherForecastService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WeatherForecastController {
 
-	private final WeatherForecastSearchService service;
+	private final WeatherForecastService service;
 
 	@GetMapping
 	public String showHomeView(WeatherForecastSearchForm weatherForecastSearchForm, Model model) {
@@ -48,14 +48,14 @@ public class WeatherForecastController {
 			throws JsonMappingException, JsonProcessingException {
 
 		if (bindingResult.hasErrors()) {
-			attributes.addFlashAttribute(bindingResult.getAllErrors());
+			attributes.addFlashAttribute("error_message",bindingResult.getAllErrors().get(0).getDefaultMessage());
 			return "redirect:/";
 		}
 
 		List<LocationData> locations = service.findLocationData(form.getInput());
 
 		if (locations.isEmpty()) {
-			attributes.addAttribute("error_message", "入力された地点は検索ができませんでした。");
+			attributes.addFlashAttribute("error_message", "入力された地点は検索ができませんでした。");
 			return "redirect:/";
 		}
 
@@ -63,10 +63,10 @@ public class WeatherForecastController {
 
 		if (locations.size() > 1) {
 			List<String> choices = locations.stream().map(LocationData::getCityRegion).toList();
-			attributes.addFlashAttribute("confirm_message", "複数の候補が存在します。検索する地点を選択してください");
-			attributes.addFlashAttribute("choices", choices);
-			attributes.addFlashAttribute("date", form.getDate());
-			return "redirect:/";
+			model.addAttribute("confirm_message", "複数の候補が存在します。検索する地点を選択してください");
+			model.addAttribute("choices", choices);
+			model.addAttribute("date", form.getDate());
+			return "choice";
 		}
 		attributes.addAttribute("cityRegion", locations.get(0).getCityRegion());
 		attributes.addAttribute("date", form.getDate());
@@ -102,14 +102,6 @@ public class WeatherForecastController {
 
 		String alert = service.findAlerts(latlon, date);
 
-		//		if (Objects.equals(alert, null)) {
-		//			attributes.addFlashAttribute("error_message", "発表中の気象警報はありません");
-		//			String referer = request.getHeader("Referer");
-		//			return "redirect:" + referer;
-		//		}
-		//
-		//		model.addAttribute("alerts", alert);
-
 		String referer = request.getHeader("Referer");
 
 		if (Objects.equals(alert, null)) {
@@ -117,7 +109,7 @@ public class WeatherForecastController {
 			return "redirect:" + referer;
 		}
 
-		attributes.addFlashAttribute("error_message", alert);
+		attributes.addFlashAttribute("alert_message", alert);
 		return "redirect:" + referer;
 	}
 

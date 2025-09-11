@@ -2,6 +2,7 @@ package com.example.demo.form;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
@@ -15,7 +16,7 @@ public class WeatherForecastSearchForm {
 	
 	@NotNull
 	private LocalDate date;
-	@NotNull
+	@NotBlank(message="旅行先を入力してください")
 	private String input;
 	
 }

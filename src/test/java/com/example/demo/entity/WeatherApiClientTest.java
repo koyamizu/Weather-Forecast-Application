@@ -23,7 +23,7 @@ public class WeatherApiClientTest {
 	
 	@Test
 	void test_fetchWeather_Alerts() throws JsonMappingException, JsonProcessingException, ApiException {
-		WeatherApiClient client=new WeatherApiClient("Yushan","2025-09-09");
+		WeatherApiClient client=new WeatherApiClient("23.3667,103.3981","2025-09-09");
 		InlineResponse2001 result=client.fetchAlerts();
 		assertThat(result).isNotNull();
 	}

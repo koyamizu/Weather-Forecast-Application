@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import io.swagger.client.ApiException;
 import io.swagger.client.model.ForecastForecastday;
 
-public interface WeatherForecastSearchService {
+public interface WeatherForecastService {
 	
 	ForecastForecastday findForecast(Optional<LocationData> gptResult,LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
 

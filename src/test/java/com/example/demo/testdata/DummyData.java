@@ -15,8 +15,14 @@ public class DummyData {
 
 	public static List<LocationData> createLocationData() {
 		return List.of(
-				new LocationData("東京", "新宿区-東京都", "Shinjuku-ku-Tokyo-to", "35.6895, 139.6917"),
-				new LocationData("サンリオピューロランド", "多摩市-東京都", "Tama-shi-Tokyo-to", "35.6275,139.4267"));
+				new LocationData("東京", "新宿区-東京都", "35.6895, 139.6917"),
+				new LocationData("サンリオピューロランド", "多摩市-東京都", "35.6275,139.4267"));
+	}
+
+	public static List<LocationData> createDuplicatedLocationData() {
+		return List.of(
+				new LocationData("草津", "草津市-滋賀県", "35.0094,135.9369"),
+				new LocationData("草津", "草津町-群馬県", "36.6269,138.6119"));
 	}
 
 	public static ForecastDay createForecastDay() {

@@ -16,8 +16,8 @@ public class LocationData {
 	private String input;
 	@JsonProperty(required = true, value = "city_region")
 	private String cityRegion;
-	@JsonProperty(required = true, value = "city_region_romaji")
-	private String cityRegionRomaji;
+//	@JsonProperty(required = true, value = "city_region_romaji")
+//	private String cityRegionRomaji;
 	@JsonProperty(required = true, value = "latlon")
 	private String latlon;
 }
