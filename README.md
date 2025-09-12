@@ -644,7 +644,7 @@ public class WeatherApiClient {
 	static {
 		ApiClient defaultClient = Configuration.getDefaultApiClient();
 		ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
-		ApiKeyAuth.setApiKey("bbfd427d1cf746e79eb30549250609");
+		ApiKeyAuth.setApiKey(APIキー);
 	}
 
 //	天気情報を取得
