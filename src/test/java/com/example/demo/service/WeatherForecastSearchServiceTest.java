@@ -12,9 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.demo.api.ChatGPTApiClient;
 import com.example.demo.entity.LocationData;
 import com.example.demo.entity.LocationDataWrapper;
-import com.example.demo.open_ai_api.ChatGPT;
 import com.example.demo.repository.WeatherForecastMapper;
 import com.example.demo.serivce.Impl.WeatherForecastServiceImpl;
 import com.example.demo.testdata.DummyData;
@@ -29,7 +29,7 @@ public class WeatherForecastSearchServiceTest {
 	WeatherForecastMapper mapper;
 	
 	@Mock
-	ChatGPT chatGPT;
+	ChatGPTApiClient chatGPT;
 	
 	@InjectMocks
 	private WeatherForecastServiceImpl service;

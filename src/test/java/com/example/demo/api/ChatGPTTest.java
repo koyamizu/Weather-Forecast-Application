@@ -1,4 +1,4 @@
-package com.example.demo.open_ai_api;
+package com.example.demo.api;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -15,7 +15,7 @@ import com.example.demo.entity.LocationDataWrapper;
 public class ChatGPTTest {
 
 	@Autowired
-	private ChatGPT chatGPT;
+	private ChatGPTApiClient chatGPT;
 
 	@Test
 	void test_structureLocation() {

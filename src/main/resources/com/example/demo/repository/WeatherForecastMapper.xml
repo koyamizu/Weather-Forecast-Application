@@ -3,22 +3,6 @@
 <mapper
 	namespace="com.example.demo.repository.WeatherForecastMapper">
 		
-<!--	 Date -->
-<!--	 標準ライブラリのLocalDateではないので、変換が必要-->
-<!--	<resultMap id="DateResult" type="org.threeten.bp.LocalDate">-->
-<!--	  <id property="date" column="date"/>-->
-<!--	</resultMap>-->
-	
-<!--	 Time -->
-<!--	 標準ライブラリのLocalDateTimeではないので、変換が必要-->
-<!--	<resultMap id="TimeResult" type="org.threeten.bp.LocalDateTime">-->
-<!--	  <id property="time" column="time"/>-->
-<!--	</resultMap>-->
-	
-<!--	dateは(MySQL)LocalDate→︎(java)LocaDate(threeten)の変換が必要-->
-<!--	　insertの時は標準ライブラリのLocalDateを使うので不要-->
-<!--	timeは(MySQL)LocalDateTime↔︎(java)Stringの変換が必要-->
-	
 	<!-- Condition -->
 	<resultMap id="ConditionResult" type="io.swagger.client.model.ForecastCondition">
 	  <id property="text" column="condition"/>
@@ -59,55 +43,6 @@
 	  <association property="condition" resultMap="ConditionResult"/>
 	</resultMap>
 	
-<!--	 ForecastForecastday -->
-<!--	<resultMap id="ForecastForecastdayResult" type="io.swagger.client.model.ForecastForecastday">-->
-<!--	  <id property="date" column="date" typeHandler="com.example.demo.utility.ThreeTenTypeHandler"/>-->
-<!--	  ↑↓ここでdayがdateを内包してないせいで、hourとテーブル結合した時に結果が24桁返ってきてしまう-->
-<!--	  <association property="day" resultMap="ForecastDayResult"/>-->
-<!--	  <collection property="hour" resultMap="ForecastHourResult"/>-->
-<!--	</resultMap>-->
-	
-<!--	 Forecast -->
-<!--	<resultMap id="ForecastResult" type="io.swagger.client.model.Forecast">-->
-<!--	  <collection property="forecastday" resultMap="ForecastForecastdayResult"/>-->
-<!--	</resultMap>-->
-	
-<!--	 InlineResponse2002  -->
-<!--	<resultMap id="LocationAndDayAndHourForecastResult"-->
-<!--	           type="io.swagger.client.model.InlineResponse2002">-->
-<!--	  <association property="location" resultMap="LocationResult"/>-->
-<!--	  <association property="forecast" resultMap="ForecastResult"/>-->
-<!--	</resultMap>-->
-
-	
-<!--	<select id="select" resultMap="LocationAndDayAndHourForecastResult">-->
-<!--	  SELECT-->
-<!--        d.date-->
-<!--        ,d.city-->
-<!--        ,d.country-->
-<!--        ,d.max_temp-->
-<!--        ,d.min_temp-->
-<!--        ,d.avg_temp-->
-<!--        ,d.avg_humidity-->
-<!--        ,d.daily_chance_of_rain-->
-<!--        ,d.condition AS day_condition-->
-<!--        ,h.time-->
-<!--	    ,h.temp-->
-<!--	    ,h.humidity-->
-<!--	    ,h.chance_of_rain-->
-<!--	    ,h.condition-->
-<!--      FROM-->
-<!--        day_forecasts AS d-->
-<!--        INNER JOIN-->
-<!--          hour_forecasts AS h-->
-<!--          ON d.city = h.city-->
-<!--      WHERE-->
-<!--        d.date = #{date}-->
-<!--          AND d.city = #{city}-->
-<!--	  ;-->
-<!--	</select>-->
-	
-<!--	cityの値のバインド方法を変える。Location→直でString-->
 	<select id="selectHour" resultMap="ForecastHourResult">
 	  SELECT
 	    date

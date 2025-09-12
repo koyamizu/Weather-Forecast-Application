@@ -30,5 +30,5 @@ CREATE TABLE hour_forecasts(
 	,chance_of_rain DECIMAL(4,1) NOT NULL
 	,humidity DECIMAL(4,1) NOT NULL
 	,created_at datetime DEFAULT CURRENT_TIMESTAMP
-	,PRIMARY KEY (date,time, city_region)
+	,PRIMARY KEY (date, time, city_region)
 );

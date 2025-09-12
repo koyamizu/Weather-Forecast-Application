@@ -5,10 +5,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title th:text="複数候補確認"></title>
-	<!--	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
 	<link rel="stylesheet" th:href="@{/css/style.css}">
-	<!--	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>-->
-	<!--	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 </head>
@@ -21,16 +18,14 @@
 			<p th:if="${confirm_message}" th:text="${confirm_message}" class="text-danger text-center mt-5"></p>
 			<form th:action="@{/result}" method="get" class="forecast-form">
 				<input type="hidden" name="date" th:value="${date}" />
-				<div>
-				<div th:each="cityRegion:${choices}" class="text-center form-group">
-					<input type="radio" th:value="${cityRegion}" th:text="${cityRegion}" name="cityRegion">
-				</div>
-				</div>
-				<div class="form-group">
-					<div class="col-md-offset-2 col-md-10">
-						<input type="submit" value="確定">
-						<a th:href="@{/}">戻る</a>
+				<div class="text-center mb-3">
+					<div th:each="cityRegion:${choices}" class="form-check form-check-inline">
+						<input type="radio" th:value="${cityRegion}" th:text="${cityRegion}" name="cityRegion">
 					</div>
+				</div>
+				<div class="d-flex justify-content-center gap-3">
+						<input type="submit" value="確定" class="btn btn-primary">
+						<a th:href="@{/}" class="btn btn-outline-secondary">戻る</a>
 				</div>
 			</form>
 		</main>

@@ -1,4 +1,4 @@
-package com.example.demo.open_ai_api;
+package com.example.demo.api;
 
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -12,12 +12,14 @@ import com.example.demo.entity.LocationDataWrapper;
 
 import lombok.RequiredArgsConstructor;
 
+//OpenAIApiを呼び出すためのクラス
 @Component
 @RequiredArgsConstructor
-public class ChatGPT{
+public class ChatGPTApiClient{
 		
 	private final OpenAiChatModel chatModel;
 	
+//	ユーザーが入力した値から、LocationDataクラスと同じ構造をもったJSONを生成する
 	public LocationDataWrapper structureLocation(String input) {
 		
 		var outputConverter =new BeanOutputConverter<>(LocationDataWrapper.class);
@@ -49,6 +51,7 @@ public class ChatGPT{
 		return outputConverter.convert(content);
 	}
 	
+//	引数で渡された気象警報を日本語に翻訳する
 	public String translateAlert(String alertJson) {
 		
 		ChatResponse response=chatModel.call(
