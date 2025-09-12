@@ -34,49 +34,41 @@
 
 ### トップ画面
 
-![トップページ.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E3%83%88%E3%83%83%E3%83%95%E3%82%9A%E3%83%98%E3%82%9A%E3%83%BC%E3%82%B7%E3%82%99.png)
+<img width="1470" height="880" alt="トップページ" src="https://github.com/user-attachments/assets/be400942-a69d-4d99-ba96-e0287a990f82" />
+
 
 ### 15日先まで検索可能です
-
-![日付一覧.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E6%97%A5%E4%BB%98%E4%B8%80%E8%A6%A7.png)
+<img width="1470" height="880" alt="日付一覧" src="https://github.com/user-attachments/assets/6c1ed432-d442-41e2-a52e-db41c2dd6c35" />
 
 ### 結果画面
 
 都道府県を入力したときは、県庁所在地のある自治体から調べるようになっております。
-
-![検索結果.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E6%A4%9C%E7%B4%A2%E7%B5%90%E6%9E%9C.png)
+<img width="1470" height="880" alt="検索結果" src="https://github.com/user-attachments/assets/7d1ae08a-6f5b-4d0a-824d-ceb591672130" />
 
 ### 地名が重複しているとき
-
-![複数地名存在.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E8%A4%87%E6%95%B0%E5%9C%B0%E5%90%8D%E5%AD%98%E5%9C%A8.png)
+<img width="1470" height="880" alt="複数地名存在" src="https://github.com/user-attachments/assets/cb5e6e4f-a4c7-4c75-be17-3b3ab25e2930" />
 
 滋賀県草津市
-
-![滋賀県草津市.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E6%BB%8B%E8%B3%80%E7%9C%8C%E8%8D%89%E6%B4%A5%E5%B8%82.png)
+<img width="1470" height="880" alt="滋賀県草津市" src="https://github.com/user-attachments/assets/817715f6-e89e-4931-ade6-574ff3375fb8" />
 
 群馬県草津町
-
-![群馬県草津町.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E7%BE%A4%E9%A6%AC%E7%9C%8C%E8%8D%89%E6%B4%A5%E7%94%BA.png)
+<img width="1470" height="880" alt="群馬県草津町" src="https://github.com/user-attachments/assets/eb9ac9c3-2d16-4b02-87a4-57abf0bc3fbd" />
 
 ### 具体的なランドマークでも調べられます
-
-![サンリオピューロランド.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E3%82%B5%E3%83%B3%E3%83%AA%E3%82%AA%E3%83%92%E3%82%9A%E3%83%A5%E3%83%BC%E3%83%AD%E3%83%A9%E3%83%B3%E3%83%88%E3%82%99.png)
+<img width="1470" height="880" alt="サンリオピューロランド" src="https://github.com/user-attachments/assets/13868f1e-9183-4b55-b0a6-353749f6989f" />
 
 ### 気象警報がない時
-
-![気象警報なし.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E6%B0%97%E8%B1%A1%E8%AD%A6%E5%A0%B1%E3%81%AA%E3%81%97.png)
+<img width="1470" height="880" alt="気象警報なし" src="https://github.com/user-attachments/assets/1e005674-020d-4e05-9b8b-48fb780c57f3" />
 
 ### 気象警報がある時
+<img width="1470" height="880" alt="気象警報1" src="https://github.com/user-attachments/assets/12ec24fe-2476-4ea0-b12e-5d9ed10d5132" />
+<img width="1470" height="880" alt="気象警報2" src="https://github.com/user-attachments/assets/1d508959-7e82-49d1-b496-a32a4f40d817" />
 
-![気象警報1.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E6%B0%97%E8%B1%A1%E8%AD%A6%E5%A0%B11.png)
-
-![気象警報2.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E6%B0%97%E8%B1%A1%E8%AD%A6%E5%A0%B12.png)
 
 ### レスポンシブ対応(iPhone 12 PRO)
+<img width="1470" height="880" alt="レスポンシブ対応1" src="https://github.com/user-attachments/assets/0dbdf638-164d-45a6-8422-321a40737be3" />
 
-![レスポンシブ対応1.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E3%83%AC%E3%82%B9%E3%83%9B%E3%82%9A%E3%83%B3%E3%82%B7%E3%83%95%E3%82%99%E5%AF%BE%E5%BF%9C1.png)
-
-![レスポンシブ対応2.png](%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1README%2026b46acc8f7880afb58edea5f66b4747/%E3%83%AC%E3%82%B9%E3%83%9B%E3%82%9A%E3%83%B3%E3%82%B7%E3%83%95%E3%82%99%E5%AF%BE%E5%BF%9C2.png)
+<img width="1470" height="880" alt="レスポンシブ対応2" src="https://github.com/user-attachments/assets/312d69d9-275e-42f4-aab0-021196cb1726" />
 
 # テーブル構成
 
@@ -795,13 +787,10 @@ public class ChatGPTApiClient{
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>検索結果</title>
-	<!--		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
 	<link rel="stylesheet" th:href="@{/css/style.css}">
 	<link rel="preconnect" href="https://cdn.weatherapi.com">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-	<!--		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>-->
-	<!--		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
 </head>
 
 <body>
@@ -828,8 +817,6 @@ public class ChatGPTApiClient{
 		</script>
 		<div class="container-sm-fluid">
 			<p th:if="${error_message}" th:text="${error_message}" class="text-danger text-center"></p>
-			<!--			<h1 class="text-center" th:text="|${location.input}(${location.cityRegion})の${#temporals.format(date,'MM月dd日')}の天気|"-->
-			<!--			style="font-size: clamp(1.2rem, 5vw, 2.5rem);"></h1>-->
 			<h1 class="text-center mx-5 my-3">
 				<span th:text="|${#temporals.format(date,'M月d日')}の天気|"></span>
 			</h1>
