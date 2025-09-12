@@ -113,6 +113,12 @@ CREATE TABLE hour_forecasts(
 
 # コード一覧
 
+9/12 11:53追記 JSONの戻り値を格納するWeatherAPIライブラリのクラス図です。
+![IMG_1473](https://github.com/user-attachments/assets/1162929e-b5e5-4f8b-bf08-f67f4f3854c9)
+
+![IMG_1474](https://github.com/user-attachments/assets/5af69293-9bb8-4bfa-994d-ef536cb5a689)
+
+
 インポート編成は省略しております
 
 ### WeatherForecastController
