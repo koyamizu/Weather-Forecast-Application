@@ -55,7 +55,7 @@ public class WeatherForecastController {
 			return "redirect:/";
 		}
 
-//		LocationDataに、ユーザー入力値、都市-行政区画名、緯度経度を格納
+//		LocationDataオブジェクトに、ユーザー入力値、都市-行政区画名、緯度経度を格納
 		List<LocationData> locations = service.findLocationData(form.getInput());
 
 		if (locations.isEmpty()) {

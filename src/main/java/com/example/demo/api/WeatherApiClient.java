@@ -13,14 +13,13 @@ import io.swagger.client.auth.ApiKeyAuth;
 import io.swagger.client.model.InlineResponse2001;
 import io.swagger.client.model.InlineResponse2002;
 
-
 //WeatherAPIを呼び出すためのクラス
 public class WeatherApiClient {
 
 	private String latlon;
-//	java.time.LocalDateではない. WeatherAPIライブラリに準拠してorg.threeten.bp.LocalDateを使用
+	//	java.time.LocalDateではない. WeatherAPIライブラリに準拠してorg.threeten.bp.LocalDateを使用
 	private LocalDate date;
-//	ライブラリが用意しているクラス.API呼び出しに使用.
+	//	ライブラリが用意しているクラス.API呼び出しに使用.
 	private ApisApi apiInstance;
 
 	public WeatherApiClient(String latlon, String dateStr) {
@@ -28,20 +27,20 @@ public class WeatherApiClient {
 		this.date = LocalDate.parse(dateStr);
 	}
 
-//	9:48 APIのキーをハードコーディングしてしまっているので、隠蔽できるように対処中です。
-	static {
-		ApiClient defaultClient = Configuration.getDefaultApiClient();
-		ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
-		ApiKeyAuth.setApiKey("bbfd427d1cf746e79eb30549250609");
-	}
+//		9:48 APIのキーをハードコーディングしてしまっているので、隠蔽できるように対処中です。
+		static {
+			ApiClient defaultClient = Configuration.getDefaultApiClient();
+			ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
+			ApiKeyAuth.setApiKey("bbfd427d1cf746e79eb30549250609");
+		}
 
-//	天気情報を取得
+	//	天気情報を取得
 	public InlineResponse2002 fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {
 		apiInstance = new ApisApi();
 		return (InlineResponse2002) apiInstance.forecastWeather(latlon, 1, date, null, null, "ja", null, null, null);
 	}
-	
-//	気象警報を取得
+
+	//	気象警報を取得
 	public InlineResponse2001 fetchAlerts() throws JsonMappingException, JsonProcessingException, ApiException {
 		apiInstance = new ApisApi();
 		return (InlineResponse2001) apiInstance.forecastWeather(latlon, 1, date, null, null, null, "yes", null, null);

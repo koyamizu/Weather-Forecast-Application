@@ -13,6 +13,7 @@ import io.swagger.client.model.InlineResponse2002;
 
 
 public class WeatherApiClientTest {
+	
 
 	@Test
 	void test_fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {
