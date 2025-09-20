@@ -20,7 +20,7 @@ public class ChatGPTApiClient{
 	private final OpenAiChatModel chatModel;
 	
 //	ユーザーが入力した値から、LocationDataクラスと同じ構造をもったJSONを生成する
-	public LocationDataWrapper structureLocation(String input) {
+	public LocationDataWrapper generateJSONLocationData(String input) {
 		
 		var outputConverter =new BeanOutputConverter<>(LocationDataWrapper.class);
 		String jsonSchema=outputConverter.getJsonSchema();
@@ -32,7 +32,8 @@ public class ChatGPTApiClient{
 						2. 政令市や区を持つ都市 → 「区名-市名-都道府県/州」。
 						   - 例: 清水寺 → "東山区-京都市-京都府"。
 						   - 例: タイムズスクエア → "マンハッタン区-ニューヨーク市-ニューヨーク州"。
-						3. 大まかな地名（都道府県や州など） → 検索に用いた座標に基づき最も近い行政区を city とする。
+						3. 大まかな地名（都道府県や州など）
+						 → 都庁、県庁、郡庁などの行政機関がある行政区の座標を用い、そこをcityとする。
 						   - 例: 東京 → "新宿区-東京都"。
 						   - 例: カリフォルニア → "サクラメント市-カリフォルニア州"。
 						4. 同名の候補が存在する場合 → 配列にすべて格納する。
