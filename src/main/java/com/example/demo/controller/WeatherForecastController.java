@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -82,6 +85,17 @@ public class WeatherForecastController {
 	public SseEmitter observeResponse(HttpSession session) {
 		
 		SseEmitter emitter =new SseEmitter(0L);
+		
+	    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	    scheduler.scheduleAtFixedRate(() -> {
+	        try {
+	            emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+	        } catch (IOException e) {
+	            emitter.completeWithError(e);
+	            scheduler.shutdown();
+	        }
+	    }, 0, 25, TimeUnit.SECONDS);
+		
 		String jobId=(String) session.getAttribute("jobId");
 		String input=(String) session.getAttribute("input");
 		//非同期処理開始→完了したら、クライアントにpush
