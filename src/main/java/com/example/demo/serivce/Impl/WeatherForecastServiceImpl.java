@@ -1,12 +1,18 @@
 package com.example.demo.serivce.Impl;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.example.demo.api.ChatGPTApiClient;
 import com.example.demo.api.WeatherApiClient;
@@ -32,28 +38,41 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 	private final WeatherForecastMapper weatherForecastSearchMapper;
 	private final ChatGPTApiClient chatGPT;
+	private final Map<String, List<LocationData>> results = new ConcurrentHashMap<>();
 
 	//	ユーザーの入力した場所から、LocaitonDataオブジェクトを返却する
 	@Override
 	public List<LocationData> findLocationData(String input) {
+		return weatherForecastSearchMapper.selectLocations(input);
+	}
 
-		//		過去に検索した場所であれば、データベースに保存されてある
-		List<LocationData> locations = weatherForecastSearchMapper.selectLocations(input);
-
-		if (!locations.isEmpty()) {
-			//ユーザーが入力した地名がデータベースに存在した場合
-			return locations;
-		}
-		//データベースに存在しない場合は、GPTに地名、行政区画名、座標（緯度経度）を出力してもらう
-		locations = chatGPT.structureLocation(input).getLocations();
-
-		if (!locations.isEmpty()) {
-			//			GPTがLocationData配列を返した時は、データベースに挿入
-			weatherForecastSearchMapper.insertLocations(locations);
-		}
-
-		//存在しない地名（例：「第三東京市」）を入力された時はnullを返却
-		return locations;
+	@Override
+	@Async
+	public void fetchLocationDataFromOpenAi(String input,String jobId,SseEmitter emitter) {
+		
+		CompletableFuture.supplyAsync(() -> {
+			//マルチスレッドでのSseEmitterってどうなるの？
+			//データベースに存在しない場合は、GPTに地名、行政区画名、座標（緯度経度）を生成してもらう
+			return chatGPT.generateJSONLocationData(input).getLocations();
+		})
+		.thenAccept(locations -> {
+			try {
+				if (locations.isEmpty()) {
+					emitter.send(SseEmitter.event().name("not_found").data("error"));
+				} else {
+					weatherForecastSearchMapper.insertLocations(locations);
+					results.put(jobId, locations);
+					emitter.send(SseEmitter.event().name("done").data("ok"));
+				}
+			} catch (IOException e) {
+				emitter.completeWithError(e);
+			}
+		});
+	}
+	
+	@Override
+	public List<LocationData> getResult(String jobId){
+		return results.remove(jobId);
 	}
 
 	//	場所と日付から、ForecastForecastday(WeatherApiライブラリが用意したクラス)を返す
@@ -78,6 +97,8 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 			return forecastDay;
 		}
 
+		//		データベースにデータがなければ、緯度と経度を用いてWeatherAPIにリクエストを送信
+
 		//		緯度と経度
 		String latlon = location.orElse(null).getLatlon();
 
@@ -91,16 +112,15 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 		ForecastDay day = forecastDay.getDay();
 		List<ForecastHour> hours = forecastDay.getHour();
 
-//		メソッドに宣言的トランザクションをしている(かつ、DataAccessExceptionは非検査例外である)ので、
-//		データアクセスで例外が放出されたらinsertDay()とinsertHour()はロールバックされます
+		//		メソッドに宣言的トランザクションを(かつ、MyBatisのメソッドから放出されるDataAccessExceptionは非検査例外である)ので、
+		//		データアクセスで例外が放出されたらinsertDay()とinsertHour()はロールバックされます
 		weatherForecastSearchMapper.insertDay(date, cityRegion, day);
 		weatherForecastSearchMapper.insertHour(date, cityRegion, hours);
 
 		return forecastDay;
 	}
 
-	
-//	緯度経度と日付から、気象警報を返す
+	//	緯度経度と日付から、気象警報を返す
 	@Override
 	public String findAlerts(String latlon, LocalDate date)
 			throws JsonMappingException, JsonProcessingException, ApiException {
@@ -109,20 +129,20 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 		WeatherApiClient client = new WeatherApiClient(latlon, dateStr);
 
-//		InlineResponse2001というクラスが返されるのですが、フィールドがネストされているのでゲッターが連続します
-//		直でAlertオブジェクトを返すようにライブラリをいじってみたのですが、うまくいきませんでした
+		//		InlineResponse2001というクラスが返されるのですが、フィールドがネストされているのでゲッターが連続します
+		//		直でAlertオブジェクトを返すようにライブラリをいじってみたのですが、うまくいきませんでした
 		List<AlertsAlert> alerts = client.fetchAlerts().getAlerts().getAlert();
 
 		int size = alerts.size();
 
 		if (size == 0) {
-//			気象警報がなければnullを返す
+			//			気象警報がなければnullを返す
 			return null;
 		}
 
 		ObjectMapper mapper = new ObjectMapper();
-//		size-1としているのは、配列で返される気象警報のうち、最新のものだけをビューに表示したいからです
-//		GPTの処理時間を短くする狙いがあります
+		//		size-1としているのは、配列で返される気象警報のうち、最新のものだけをビューに表示したいからです
+		//		GPTの処理時間を短くする狙いがあります
 		String jsonStr = mapper.writeValueAsString(alerts.get(size - 1));
 
 		return chatGPT.translateAlert(jsonStr);

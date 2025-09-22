@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.example.demo.entity.LocationData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -18,5 +20,9 @@ public interface WeatherForecastService {
 	String findAlerts(String city, LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
 
 	List<LocationData> findLocationData(String input);
+
+	void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter);
+
+	List<LocationData> getResult(String jobId);
 
 }
