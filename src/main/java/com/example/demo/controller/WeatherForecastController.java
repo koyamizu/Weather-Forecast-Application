@@ -94,7 +94,7 @@ public class WeatherForecastController {
 	            emitter.completeWithError(e);
 	            scheduler.shutdown();
 	        }
-	    }, 0, 25, TimeUnit.SECONDS);
+	    }, 0, 10, TimeUnit.SECONDS);
 		
 		String jobId=(String) session.getAttribute("jobId");
 		String input=(String) session.getAttribute("input");
