@@ -92,6 +92,18 @@
 	  ;
 	</select>
 	
+	<select id="selectLatLon">
+	  SELECT
+	   latlon
+	  FROM
+	   locations
+	  WHERE
+	   city_region = #{cityRegion}
+	  LIMIT 1
+	  ;
+	
+	</select>
+	
 	<insert id="insertDay">
 	  INSERT INTO
 	    day_forecasts

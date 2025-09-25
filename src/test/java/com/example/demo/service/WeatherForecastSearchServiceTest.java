@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.api.ChatGPTApiClient;
+import com.example.demo.api.OpenAiApiClient;
 import com.example.demo.entity.LocationData;
 import com.example.demo.entity.LocationDataWrapper;
 import com.example.demo.repository.WeatherForecastMapper;
@@ -29,7 +29,7 @@ public class WeatherForecastSearchServiceTest {
 	WeatherForecastMapper mapper;
 	
 	@Mock
-	ChatGPTApiClient chatGPT;
+	OpenAiApiClient chatGPT;
 	
 	@InjectMocks
 	private WeatherForecastServiceImpl service;
@@ -53,7 +53,7 @@ public class WeatherForecastSearchServiceTest {
 		var wrapper=new LocationDataWrapper();
 		wrapper.setLocations(expecteds);
 		doReturn(new ArrayList<LocationData>()).when(mapper).selectLocations("東京");
-		doReturn(wrapper).when(chatGPT).generateJSONLocationData("東京");
+		doReturn(wrapper).when(chatGPT).generateLocationData("東京");
 		doNothing().when(mapper).insertLocations(expecteds);
 		
 		List<LocationData> actuals=service.findLocationData("東京");
@@ -66,7 +66,7 @@ public class WeatherForecastSearchServiceTest {
 	void test_findLocationData_Imaginary_Location() {
 
 		doReturn(new ArrayList<LocationData>()).when(mapper).selectLocations("第三東京市");
-		doReturn(new LocationDataWrapper(new ArrayList<LocationData>())).when(chatGPT).generateJSONLocationData("第三東京市");
+//		doReturn(new LocationDataWrapper(new ArrayList<LocationData>())).when(chatGPT).generateLocationData("第三東京市");
 		
 		List<LocationData> actuals=service.findLocationData("第三東京市");
 		
@@ -79,7 +79,7 @@ public class WeatherForecastSearchServiceTest {
 		var wrapper=new LocationDataWrapper();
 		wrapper.setLocations(expecteds);
 		doReturn(new ArrayList<LocationData>()).when(mapper).selectLocations("草津");
-		doReturn(wrapper).when(chatGPT).generateJSONLocationData("草津");
+		doReturn(wrapper).when(chatGPT).generateLocationData("草津");
 		doNothing().when(mapper).insertLocations(expecteds);
 		
 		List<LocationData> actuals=service.findLocationData("草津");

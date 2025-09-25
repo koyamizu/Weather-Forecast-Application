@@ -2,7 +2,6 @@ package com.example.demo.serivce;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -15,7 +14,7 @@ import io.swagger.client.model.ForecastForecastday;
 
 public interface WeatherForecastService {
 	
-	ForecastForecastday findForecast(Optional<LocationData> gptResult,LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
+	ForecastForecastday findForecast(String cityRegion,LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
 
 	String findAlerts(String city, LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
 
@@ -24,5 +23,4 @@ public interface WeatherForecastService {
 	void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter);
 
 	List<LocationData> getResult(String jobId);
-
 }

@@ -23,6 +23,9 @@ public interface WeatherForecastMapper {
 //	過去に検索したことのある場所（重複している場所名も含む）を抽出
 	List<LocationData> selectLocations(String input);
 	
+//	緯度と経度を抽出
+	String selectLatLon(String cityRegion);
+	
 //	1日の天気予報を挿入
 	void insertDay(LocalDate date, String cityRegion,ForecastDay day);
 	

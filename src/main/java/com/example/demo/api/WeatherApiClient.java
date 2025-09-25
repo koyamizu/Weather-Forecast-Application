@@ -17,22 +17,18 @@ import io.swagger.client.model.InlineResponse2002;
 public class WeatherApiClient {
 
 	private String latlon;
-	//	java.time.LocalDateではない. WeatherAPIライブラリに準拠してorg.threeten.bp.LocalDateを使用
+	//	java.time.LocalDateではない。WeatherAPIライブラリに準拠してorg.threeten.bp.LocalDateを使用
 	private LocalDate date;
-	//	ライブラリが用意しているクラス.API呼び出しに使用.
+	//	ライブラリが用意しているクラス。API呼び出しに使用。
 	private ApisApi apiInstance;
 
-	public WeatherApiClient(String latlon, String dateStr) {
+	public WeatherApiClient(String latlon, String dateStr, String apiKey) {
 		this.latlon = latlon;
 		this.date = LocalDate.parse(dateStr);
+		ApiClient defaultClient = Configuration.getDefaultApiClient();
+		ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
+		ApiKeyAuth.setApiKey(apiKey);
 	}
-
-//		9:48 APIのキーをハードコーディングしてしまっているので、隠蔽できるように対処中です。
-		static {
-			ApiClient defaultClient = Configuration.getDefaultApiClient();
-			ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
-			ApiKeyAuth.setApiKey("bbfd427d1cf746e79eb30549250609");
-		}
 
 	//	天気情報を取得
 	public InlineResponse2002 fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {

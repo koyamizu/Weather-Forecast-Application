@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,8 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.example.demo.api.ChatGPTApiClient;
+import com.example.demo.api.OpenAiApiClient;
 import com.example.demo.api.WeatherApiClient;
+import com.example.demo.api.WeatherApiClientFactory;
 import com.example.demo.entity.LocationData;
 import com.example.demo.repository.WeatherForecastMapper;
 import com.example.demo.serivce.WeatherForecastService;
@@ -37,54 +37,56 @@ import lombok.RequiredArgsConstructor;
 public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 	private final WeatherForecastMapper weatherForecastSearchMapper;
-	private final ChatGPTApiClient chatGPT;
+	private final OpenAiApiClient openAiApi;
+	private final WeatherApiClientFactory clientFactory;
 	private final Map<String, List<LocationData>> results = new ConcurrentHashMap<>();
 
-	//	ユーザーの入力した場所から、LocaitonDataオブジェクトを返却する
+	//	ユーザーの入力した場所から、データベースにアクセスしてLocaitonDataオブジェクトを返却する
 	@Override
 	public List<LocationData> findLocationData(String input) {
-		return weatherForecastSearchMapper.selectLocations(input);
+		List<LocationData> locationData = weatherForecastSearchMapper.selectLocations(input);
+		return locationData;
 	}
 
+	//	OpenAiApiを呼び出し、ユーザーの入力値からLocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
 	@Override
-	@Async
-	public void fetchLocationDataFromOpenAi(String input,String jobId,SseEmitter emitter) {
-		
+	@Async()
+	public void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) {
+
+		//		非同期処理
 		CompletableFuture.supplyAsync(() -> {
-			//マルチスレッドでのSseEmitterってどうなるの？
-			//データベースに存在しない場合は、GPTに地名、行政区画名、座標（緯度経度）を生成してもらう
-			return chatGPT.generateJSONLocationData(input).getLocations();
+			//LocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
+			return openAiApi.generateLocationData(input).getLocations();
 		})
-		.thenAccept(locations -> {
-			try {
-				if (locations.isEmpty()) {
-					emitter.send(SseEmitter.event().name("not_found").data("error"));
-				} else {
-					weatherForecastSearchMapper.insertLocations(locations);
-					results.put(jobId, locations);
-					emitter.send(SseEmitter.event().name("done").data("ok"));
-				}
-			} catch (IOException e) {
-				emitter.completeWithError(e);
-			}
-		});
+				.thenAccept(locations -> {
+					try {
+						if (locations.isEmpty()) {
+							emitter.send(SseEmitter.event().name("not_found").data("error"));
+						} else {
+							weatherForecastSearchMapper.insertLocations(locations);
+							//jobId、locationsのセットでデータを保持
+							results.put(jobId, locations);
+							emitter.send(SseEmitter.event().name("done").data("ok"));
+						}
+					} catch (IOException e) {
+						emitter.completeWithError(e);
+					}
+				});
 	}
-	
+
+	//	jobIdに対応したLocationDataリストを返す
 	@Override
-	public List<LocationData> getResult(String jobId){
+	public List<LocationData> getResult(String jobId) {
 		return results.remove(jobId);
 	}
 
 	//	場所と日付から、ForecastForecastday(WeatherApiライブラリが用意したクラス)を返す
 	@Override
 	@Transactional
-	public ForecastForecastday findForecast(Optional<LocationData> location, LocalDate date)
+	public ForecastForecastday findForecast(String cityRegion, LocalDate date)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
 		ForecastForecastday forecastDay = new ForecastForecastday();
-
-		//		locationはNull安全になっているが、普通はnullにならない（ここまで来た時点で何かしらの場所情報が入っているため）
-		String cityRegion = location.orElse(null).getCityRegion();
 
 		//		過去に検索したことがあれば、データベースから1日の天気予報が返される
 		ForecastDay forecast = weatherForecastSearchMapper.selectDay(cityRegion, date);
@@ -99,12 +101,12 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 		//		データベースにデータがなければ、緯度と経度を用いてWeatherAPIにリクエストを送信
 
-		//		緯度と経度
-		String latlon = location.orElse(null).getLatlon();
+		//		緯度と経度を抽出
+		String latlon = weatherForecastSearchMapper.selectLatLon(cityRegion);
 
 		String dateStr = date.toString();
-		WeatherApiClient client = new WeatherApiClient(latlon, dateStr);
 
+		WeatherApiClient client = clientFactory.create(latlon, dateStr);
 		//			InlineResponse2002はWeatherApiライブラリが用意したクラス
 		InlineResponse2002 resp = client.fetchWeather();
 
@@ -112,7 +114,7 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 		ForecastDay day = forecastDay.getDay();
 		List<ForecastHour> hours = forecastDay.getHour();
 
-		//		メソッドに宣言的トランザクションを(かつ、MyBatisのメソッドから放出されるDataAccessExceptionは非検査例外である)ので、
+		//		メソッドに宣言的トランザクションを付与している(かつ、MyBatisのメソッドから放出されるDataAccessExceptionは非検査例外である)ので、
 		//		データアクセスで例外が放出されたらinsertDay()とinsertHour()はロールバックされます
 		weatherForecastSearchMapper.insertDay(date, cityRegion, day);
 		weatherForecastSearchMapper.insertHour(date, cityRegion, hours);
@@ -122,12 +124,13 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 	//	緯度経度と日付から、気象警報を返す
 	@Override
-	public String findAlerts(String latlon, LocalDate date)
+	public String findAlerts(String cityRegion, LocalDate date)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
 		String dateStr = date.toString();
+		String latlon = weatherForecastSearchMapper.selectLatLon(cityRegion);
 
-		WeatherApiClient client = new WeatherApiClient(latlon, dateStr);
+		WeatherApiClient client = clientFactory.create(latlon, dateStr);
 
 		//		InlineResponse2001というクラスが返されるのですが、フィールドがネストされているのでゲッターが連続します
 		//		直でAlertオブジェクトを返すようにライブラリをいじってみたのですが、うまくいきませんでした
@@ -142,10 +145,10 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 		ObjectMapper mapper = new ObjectMapper();
 		//		size-1としているのは、配列で返される気象警報のうち、最新のものだけをビューに表示したいからです
-		//		GPTの処理時間を短くする狙いがあります
+		//		OpenAiApiの処理時間を短くする狙いがあります
 		String jsonStr = mapper.writeValueAsString(alerts.get(size - 1));
 
-		return chatGPT.translateAlert(jsonStr);
+		return openAiApi.translateAlert(jsonStr);
 	}
 
 }

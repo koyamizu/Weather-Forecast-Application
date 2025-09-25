@@ -15,12 +15,12 @@ import lombok.RequiredArgsConstructor;
 //OpenAIApiを呼び出すためのクラス
 @Component
 @RequiredArgsConstructor
-public class ChatGPTApiClient{
+public class OpenAiApiClient{
 		
 	private final OpenAiChatModel chatModel;
 	
-//	ユーザーが入力した値から、LocationDataクラスと同じ構造をもったJSONを生成する
-	public LocationDataWrapper generateJSONLocationData(String input) {
+//	ユーザーが入力した値から、LocationDataオブジェクトを生成する
+	public LocationDataWrapper generateLocationData(String input) {
 		
 		var outputConverter =new BeanOutputConverter<>(LocationDataWrapper.class);
 		String jsonSchema=outputConverter.getJsonSchema();

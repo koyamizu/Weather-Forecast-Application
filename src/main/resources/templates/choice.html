@@ -18,6 +18,7 @@
 			<p th:if="${confirm_message}" th:text="${confirm_message}" class="text-danger text-center mt-5"></p>
 			<form th:action="@{/result}" method="get" class="forecast-form">
 				<input type="hidden" name="date" th:value="${date}" />
+				<input type="hidden" name="input" th:value="${input}" />
 				<div class="text-center mb-3">
 					<div th:each="cityRegion:${choices}" class="form-check form-check-inline">
 						<input type="radio" th:value="${cityRegion}" th:text="${cityRegion}" name="cityRegion">

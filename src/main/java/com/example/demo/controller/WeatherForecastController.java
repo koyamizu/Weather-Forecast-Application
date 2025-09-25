@@ -3,16 +3,16 @@ package com.example.demo.controller;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -40,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 public class WeatherForecastController {
 
 	private final WeatherForecastService service;
+	private final Map<String, WeatherForecastSearchForm> forms = new ConcurrentHashMap<>();
 
 	//	ホーム画面を表示
 	@GetMapping
@@ -51,9 +52,10 @@ public class WeatherForecastController {
 		return "home";
 	}
 
+	//	土地データ（ユーザー入力値、都市-行政区画名、緯度経度）を検索
 	@PostMapping("search")
 	public String search(RedirectAttributes attributes, @Validated WeatherForecastSearchForm form,
-			BindingResult bindingResult, Model model, HttpSession session)
+			BindingResult bindingResult, Model model)
 			throws JsonMappingException, JsonProcessingException, IOException {
 
 		//		入力が空だった時
@@ -64,113 +66,111 @@ public class WeatherForecastController {
 
 		//	LocationDataリストに、データベースから抽出したユーザー入力値、都市-行政区画名、緯度経度を格納
 		List<LocationData> locations = service.findLocationData(form.getInput());
-		session.setAttribute("date", form.getDate());
 
 		if (locations.isEmpty()) {
 			//データベースにデータがなかったとき
-			session.setAttribute("input", form.getInput());
-			//複数のクライアントから同時に検索されることを考慮して、jobIdを発行
-			//jobIdにはランダム生成のコードを使用
-			UUID uuid = UUID.randomUUID();
-			session.setAttribute("jobId", uuid.toString());
+
+			//1ユーザーが複数のタブから同時に検索した時用に、ジョブごとにIDを発行。
+			String jobId = UUID.randomUUID().toString();
+
+			//jobIdとフォーム入力情報を結びつける
+			forms.put(jobId, form);
+			model.addAttribute("jobId", jobId);
 			return "waiting";
 		}
 
-//		GPTにLocalDataのJSON配列を生成させた後との共通処理を記述。メソッドの中でRedirect先を指定している。
-//		このメソッドは戻り値がStringになる。
-		return checkSameLocationsAndReturnView(locations, session, model, attributes);
+		//	共通処理　戻り値はString（リダイレクト先、またはview）
+		return checkSameLocationsAndReturnView(model, attributes, form.getDate(), locations);
 	}
 
+	//	SSEからpushを受け取るために、リクエストを送る
 	@GetMapping("observe")
-	public SseEmitter observeResponse(HttpSession session) {
-		
-		SseEmitter emitter =new SseEmitter(0L);
-		
-	    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-	    scheduler.scheduleAtFixedRate(() -> {
-	        try {
-	            emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
-	        } catch (IOException e) {
-	            emitter.completeWithError(e);
-	            scheduler.shutdown();
-	        }
-	    }, 0, 25, TimeUnit.SECONDS);
-		
-		String jobId=(String) session.getAttribute("jobId");
-		String input=(String) session.getAttribute("input");
-		//非同期処理開始→完了したら、クライアントにpush
-		service.fetchLocationDataFromOpenAi(input, jobId,emitter);
+	public SseEmitter observeResponse(@RequestParam String jobId) {
+
+		//0L = タイムアウト値無制限
+		SseEmitter emitter = new SseEmitter(0L);
+
+		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
+		//		try-with-resource文で確実にスレッドプールを破棄
+		try (ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()) {
+			scheduler.scheduleAtFixedRate(() -> {
+				try {
+					emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+				} catch (IOException e) {
+					emitter.completeWithError(e);
+				}
+			}, 0, 25, TimeUnit.SECONDS);
+		}
+		var form = forms.get(jobId);
+		// 非同期処理開始→完了したら、クライアントにpush送信
+		// OpenAiApiに入力値を渡して、ユーザー入力値、都市-行政区画名、緯度経度のJSON配列に変換し、その結果をリストLocaitonDataに格納
+		service.fetchLocationDataFromOpenAi(form.getInput(), jobId, emitter);
 		return emitter;
 	}
-	
+
+	//	クライアントにpush送信した後の処理
 	@GetMapping("processing")
-	public String relayProcessing(HttpSession session,Model model,RedirectAttributes attributes) {
-		String jobId=(String) session.getAttribute("jobId");
-		List<LocationData> locations=service.getResult(jobId);
-		return checkSameLocationsAndReturnView(locations, session, model, attributes);
+	public String relayProcessing(@RequestParam String jobId,
+			Model model, RedirectAttributes attributes) {
+		List<LocationData> locations = service.getResult(jobId);
+		LocalDate date = forms.remove(jobId).getDate();
+		//	共通処理　戻り値はString（リダイレクト先、またはview）
+		return checkSameLocationsAndReturnView(model, attributes, date, locations);
 	}
 
-	private String checkSameLocationsAndReturnView(List<LocationData> locations, HttpSession session, Model model,
-			RedirectAttributes attributes) {
+//	共通処理　同一名称の地名が複数あった時、どの場所の天気を調べるのかクライアントに返す。なければ/resultにリダイレクト。
+	private String checkSameLocationsAndReturnView(Model model,
+			RedirectAttributes attributes, LocalDate date, List<LocationData> locations) {
 
-		//		showResultView()で使用するので、セッションに保存
-		session.setAttribute("locations", locations);
-
-		LocalDate date = (LocalDate) session.getAttribute("date");
+		String input = locations.get(0).getInput();
 
 		if (locations.size() > 1) {
-			//			同一地名が複数あった時
-			//			[/choice]にredirect?
-			//			LocationData[input,cityRegion,latlon]のうち、cityRegionのみを抽出
+			//	同一地名が複数あった時
+			//	LocationData[input,cityRegion,latlon]のうち、cityRegionのみを抽出
 			List<String> choices = locations.stream().map(LocationData::getCityRegion).toList();
 			model.addAttribute("confirm_message", "複数の候補が存在します。検索する地点を選択してください");
 			model.addAttribute("choices", choices);
 			model.addAttribute("date", date);
+			model.addAttribute("input", input);
 			return "choice";
 		}
 		//同一地名がなかった時
+		attributes.addAttribute("date", date.toString());
+		attributes.addAttribute("input", input);
 		attributes.addAttribute("cityRegion", locations.get(0).getCityRegion());
-		attributes.addAttribute("date", date);
 
 		return "redirect:/result";
 	}
 
 	//	検索結果画面を表示
 	@GetMapping("result")
-	public String showResultView(@RequestParam String cityRegion, @RequestParam LocalDate date, Model model,
-			RedirectAttributes attributes, HttpSession session)
+	public String showResultView(@RequestParam LocalDate date, @RequestParam String input,
+			@RequestParam String cityRegion, Model model,
+			RedirectAttributes attributes)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
-		//		セッションに保存していたlocationsオブジェクトを取得
-		@SuppressWarnings("unchecked")
-		List<LocationData> locations = (List<LocationData>) session.getAttribute("locations");
-
-		//		LocationData配列locationsのうち、リクエストパラメータで渡されたcityRegionと一致するものを抽出
-		//		複数候補があった際に、配列の中から検索したい地点を抽出している
-		Optional<LocationData> location = locations.stream().filter(gr -> gr.getCityRegion()
-				.equals(cityRegion)).findFirst();
-
-		//		天気を検索し、結果を格納
-		ForecastForecastday weatherForecast = service.findForecast(location, date);
+		//		WeatherAPIにリクエストを送る or 過去の検索結果を返す
+		ForecastForecastday weatherForecast = service.findForecast(cityRegion, date);
 
 		model.addAttribute("day", weatherForecast.getDay());
 		model.addAttribute("hours", weatherForecast.getHour());
 		model.addAttribute("date", date);
-		model.addAttribute("location", location.orElse(null));
+		model.addAttribute("input", input);
+		model.addAttribute("cityRegion", cityRegion);
 
 		return "result";
 	}
 
-	//	気象警報を表示 latlonは緯度(latitude)と経度(longitude)
-	@GetMapping("alert-info/{latlon}/{date}")
-	public String getAlerts(@PathVariable String latlon, @PathVariable LocalDate date, Model model,
+	//	気象警報を表示
+	@GetMapping("alert-info/{cityRegion}/{date}")
+	public String getAlerts(@PathVariable String cityRegion, @PathVariable LocalDate date, Model model,
 			RedirectAttributes attributes, HttpServletRequest request)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
 		//		気象警報を格納
-		String alert = service.findAlerts(latlon, date);
+		String alert = service.findAlerts(cityRegion, date);
 
-		//		前のページ（/result?=xx&?=xx）を取得
+		//		前のページ（/result?=xx&?=xx&?=xx）を取得
 		String referer = request.getHeader("Referer");
 
 		if (Objects.equals(alert, null)) {

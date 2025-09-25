@@ -18,11 +18,12 @@
 	</div>
 
 	<script th:inline="javascript">
-		const eventSource = new EventSource("/observe");
+		const jobId = /*[[${jobId}]]*/null;
+		const eventSource = new EventSource("/observe?jobId="+jobId);
 
 		eventSource.addEventListener("done", () => {
 			eventSource.close();
-			window.location.href = "/processing";
+			window.location.href = "/processing?jobId="+jobId;
 		});
 
 		eventSource.addEventListener("not_found", () => {

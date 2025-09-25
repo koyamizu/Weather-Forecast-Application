@@ -15,12 +15,12 @@ import com.example.demo.entity.LocationDataWrapper;
 public class ChatGPTTest {
 
 	@Autowired
-	private ChatGPTApiClient chatGPT;
+	private OpenAiApiClient chatGPT;
 
 	@Test
 	void test_structureLocation() {
 		long startTime = System.currentTimeMillis();
-		LocationDataWrapper response = chatGPT.generateJSONLocationData("第三東京市");
+		LocationDataWrapper response = chatGPT.generateLocationData("第三東京市");
 		List<LocationData> location = response.getLocations();
 		//		String note=response.getNote();
 		System.out.println(location.toString());
