@@ -121,11 +121,36 @@ CREATE TABLE hour_forecasts(
 
 # コード一覧
 
-9/12 11:53追記 JSONの戻り値を格納するWeatherAPIライブラリのクラス図です。
-![IMG_1473](https://github.com/user-attachments/assets/1162929e-b5e5-4f8b-bf08-f67f4f3854c9)
+### ディレクトリ構成
 
-![IMG_1474](https://github.com/user-attachments/assets/5af69293-9bb8-4bfa-994d-ef536cb5a689)
-
+```html
+/
+├─ api
+│  ├─ OpenAiApiClient.java
+│  ├─ WeatherApiClient.java
+│  └─ WeatherApiClientFactory.java
+├─ configuration
+│  ├─ ApiKeyConfig.java
+│  └─ ThreadPoolConfiguration.java
+├─ controller
+│  ├─ WeatherForecastController.java
+│  └─ WeatherForecastControllerAdvice.java
+├─ entity
+│  ├─ LocationData.java
+│  └─ LocationDataWrapper.java
+├─ form
+│  └─ WeatherForecastSearchForm.java
+├─ repository
+│  └─ WeatherForecastMapper.java
+├─ service
+│  ├─ impl
+│  │  └─ WeatherForecastServiceImpl.java
+│  └─ WeatherForecastService.java
+├─ utility
+│  ├─ StringTypeHandler.java
+│  └─ ThreeTenTypeHandler.java
+└─ WeatherForecastApplication.java
+```
 
 インポート編成は省略しております
 
@@ -138,92 +163,129 @@ CREATE TABLE hour_forecasts(
 public class WeatherForecastController {
 
 	private final WeatherForecastService service;
+	private final Map<String, WeatherForecastSearchForm> forms = new ConcurrentHashMap<>();
+//	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-//	ホーム画面を表示
+	//	ホーム画面を表示
 	@GetMapping
 	public String showHomeView(WeatherForecastSearchForm weatherForecastSearchForm, Model model) {
-//		今日含めて16日間の日付リストを作成
+		//		今日含めて16日間の日付リストを作成
 		List<LocalDate> dates = IntStream.range(0, 16)
 				.mapToObj(LocalDate.now()::plusDays).toList();
 		model.addAttribute("dates", dates);
 		return "home";
 	}
 
-	@GetMapping("search")
+	//	土地データ（ユーザー入力値、都市-行政区画名、緯度経度）を検索
+	@PostMapping("search")
 	public String search(RedirectAttributes attributes, @Validated WeatherForecastSearchForm form,
-			BindingResult bindingResult, Model model, HttpSession session)
-			throws JsonMappingException, JsonProcessingException {
+			BindingResult bindingResult, Model model)
+			throws JsonMappingException, JsonProcessingException, IOException {
 
-//		入力が空だった時
+		//		入力が空だった時
 		if (bindingResult.hasErrors()) {
-			attributes.addFlashAttribute("error_message",bindingResult.getAllErrors().get(0).getDefaultMessage());
+			attributes.addFlashAttribute("error_message", bindingResult.getAllErrors().get(0).getDefaultMessage());
 			return "redirect:/";
 		}
 
-//		LocationDataに、ユーザー入力値、都市-行政区画名、緯度経度を格納
+		//	LocationDataリストに、データベースから抽出したユーザー入力値、都市-行政区画名、緯度経度を格納
 		List<LocationData> locations = service.findLocationData(form.getInput());
 
 		if (locations.isEmpty()) {
-//			存在しない場所を入力した時や、ChatGPTが場所を検索（認識）できなかった時
-			attributes.addFlashAttribute("error_message", "入力された地点は検索ができませんでした。");
-			return "redirect:/";
+			//データベースにデータがなかったとき
+
+			//1ユーザーが複数のタブから同時に検索した時用に、ジョブごとにIDを発行。
+			String jobId = UUID.randomUUID().toString();
+
+			//jobIdとフォーム入力情報を結びつける
+			forms.put(jobId, form);
+			model.addAttribute("jobId", jobId);
+			return "waiting";
 		}
 
-//		showResultView()で使用するので、セッションに保存
-		session.setAttribute("locations", locations);
+		//	共通処理　戻り値はString（リダイレクト先、またはview）
+		return checkSameLocationsAndReturnView(model, attributes, form.getDate(), locations);
+	}
+
+	//	SSEからpushを受け取るために、リクエストを送る
+	@GetMapping("observe")
+	public SseEmitter observeResponse(@RequestParam String jobId) throws IOException {
+
+		//0L = タイムアウト値無制限
+		SseEmitter emitter = new SseEmitter(0L);
+
+		var form = forms.get(jobId);
+		// 非同期処理開始→完了したら、クライアントにpush送信
+		// OpenAiApiに入力値を渡して、ユーザー入力値、都市-行政区画名、緯度経度のJSON配列に変換し、その結果をリストLocaitonDataに格納
+		service.fetchLocationDataFromOpenAi(form.getInput(), jobId, emitter);
+		return emitter;
+	}
+
+	//	クライアントにpush送信した後の処理
+	@GetMapping("processing")
+	public String relayProcessing(@RequestParam String jobId,
+			Model model, RedirectAttributes attributes) {
+
+		List<LocationData> locations = service.getResult(jobId);
+		LocalDate date = forms.remove(jobId).getDate();
+		
+		//	共通処理　戻り値はString（リダイレクト先、またはview）
+		return checkSameLocationsAndReturnView(model, attributes, date, locations);
+	}
+
+//	共通処理　同一名称の地名が複数あった時、どの場所の天気を調べるのかクライアントに返す。なければ/resultにリダイレクト。
+	private String checkSameLocationsAndReturnView(Model model,
+			RedirectAttributes attributes, LocalDate date, List<LocationData> locations) {
+
+		String input = locations.get(0).getInput();
 
 		if (locations.size() > 1) {
-//			複数の候補が見つかった時
-			
-//			LocationData[input,cityRegion,latlon]のうち、cityRegionのみを抽出
+			//	同一地名が複数あった時
+			//	LocationData[input,cityRegion,latlon]のうち、cityRegionのみを抽出
 			List<String> choices = locations.stream().map(LocationData::getCityRegion).toList();
 			model.addAttribute("confirm_message", "複数の候補が存在します。検索する地点を選択してください");
 			model.addAttribute("choices", choices);
-			model.addAttribute("date", form.getDate());
+			model.addAttribute("date", date);
+			model.addAttribute("input", input);
 			return "choice";
 		}
+		//同一地名がなかった時
+		attributes.addAttribute("date", date.toString());
+		attributes.addAttribute("input", input);
 		attributes.addAttribute("cityRegion", locations.get(0).getCityRegion());
-		attributes.addAttribute("date", form.getDate());
 
 		return "redirect:/result";
 	}
 
-//	検索結果画面を表示
+	//	検索結果画面を表示
 	@GetMapping("result")
-	public String showResultView(@RequestParam String cityRegion, @RequestParam LocalDate date, Model model,
-			RedirectAttributes attributes, HttpSession session)
+	public String showResultView(@RequestParam LocalDate date, @RequestParam String input,
+			@RequestParam String cityRegion, Model model,
+			RedirectAttributes attributes)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
-//		セッションに保存していたlocationsオブジェクトを取得
-		@SuppressWarnings("unchecked")
-		List<LocationData> locations = (List<LocationData>) session.getAttribute("locations");
-
-//		LocationData配列locationsのうち、リクエストパラメータで渡されたcityRegionと一致するものを抽出
-//		複数候補があった際に、配列の中から検索したい地点を抽出している
-		Optional<LocationData> location = locations.stream().filter(gr -> gr.getCityRegion()
-				.equals(cityRegion)).findFirst();
-
-//		天気を検索し、結果を格納
-		ForecastForecastday weatherForecast = service.findForecast(location, date);
+		//		WeatherAPIにリクエストを送る or 過去の検索結果を返す
+		ForecastForecastday weatherForecast = service.findForecast(cityRegion, date);
 
 		model.addAttribute("day", weatherForecast.getDay());
 		model.addAttribute("hours", weatherForecast.getHour());
 		model.addAttribute("date", date);
-		model.addAttribute("location", location.orElse(null));
+		model.addAttribute("input", input);
+		model.addAttribute("cityRegion", cityRegion);
 
 		return "result";
 	}
 
-//	気象警報を表示 latlonは緯度(latitude)と経度(longitude)
-	@GetMapping("alert-info/{latlon}/{date}")
-	public String getAlerts(@PathVariable String latlon, @PathVariable LocalDate date, Model model,
+	//	気象警報を表示
+	@GetMapping("alert-info/{cityRegion}/{date}")
+	public String getAlerts(@PathVariable String cityRegion, @PathVariable LocalDate date, Model model,
 			RedirectAttributes attributes, HttpServletRequest request)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
-//		気象警報を格納
-		String alert = service.findAlerts(latlon, date);
+		//		気象警報を格納
+		String alert = service.findAlerts(cityRegion, date);
 
-//		前のページ（/result?=xx&?=xx）を取得
+		//		前のページ（/result?=xx&?=xx&?=xx）を取得
 		String referer = request.getHeader("Referer");
 
 		if (Objects.equals(alert, null)) {
@@ -236,6 +298,7 @@ public class WeatherForecastController {
 	}
 
 }
+
 ```
 
 ### WeatherForecastControllerAdvice
@@ -246,7 +309,8 @@ public class WeatherForecastControllerAdvice {
 
 //	500番台のエラーを処理 主にデータアクセスなど
 	@ExceptionHandler({ DataAccessException.class, NullPointerException.class,
-			JsonMappingException.class, JsonProcessingException.class, ApiException.class })
+			JsonMappingException.class, JsonProcessingException.class, ApiException.class
+			,IOException.class})
 	public String showDatabaseErrorPage(Exception e) {
 		e.printStackTrace();
 		return "error/500";
@@ -326,6 +390,9 @@ public interface WeatherForecastMapper {
 	
 //	過去に検索したことのある場所（重複している場所名も含む）を抽出
 	List<LocationData> selectLocations(String input);
+	
+//	緯度と経度を抽出
+	String selectLatLon(String cityRegion);
 	
 //	1日の天気予報を挿入
 	void insertDay(LocalDate date, String cityRegion,ForecastDay day);
@@ -435,6 +502,18 @@ MyBatisのxmlファイル
 	  ;
 	</select>
 	
+	<select id="selectLatLon">
+	  SELECT
+	   latlon
+	  FROM
+	   locations
+	  WHERE
+	   city_region = #{cityRegion}
+	  LIMIT 1
+	  ;
+	
+	</select>
+	
 	<insert id="insertDay">
 	  INSERT INTO
 	    day_forecasts
@@ -519,12 +598,15 @@ MyBatisのxmlファイル
 ```java
 public interface WeatherForecastService {
 	
-	ForecastForecastday findForecast(Optional<LocationData> gptResult,LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
+	ForecastForecastday findForecast(String cityRegion,LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
 
 	String findAlerts(String city, LocalDate date) throws JsonMappingException, JsonProcessingException, ApiException;
 
 	List<LocationData> findLocationData(String input);
 
+	void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) throws IOException;
+
+	List<LocationData> getResult(String jobId);
 }
 ```
 
@@ -537,41 +619,70 @@ public interface WeatherForecastService {
 public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 	private final WeatherForecastMapper weatherForecastSearchMapper;
-	private final ChatGPTApiClient chatGPT;
+	private final OpenAiApiClient openAiApi;
+	private final WeatherApiClientFactory clientFactory;
+	private final Map<String, List<LocationData>> results = new ConcurrentHashMap<>();
 
-	//	ユーザーの入力した場所から、LocaitonDataオブジェクトを返却する
+	//	ユーザーの入力した場所から、データベースにアクセスしてLocaitonDataオブジェクトを返却する
 	@Override
 	public List<LocationData> findLocationData(String input) {
+		List<LocationData> locationData = weatherForecastSearchMapper.selectLocations(input);
+		return locationData;
+	}
 
-		//		過去に検索した場所であれば、データベースに保存されてある
-		List<LocationData> locations = weatherForecastSearchMapper.selectLocations(input);
+	//	OpenAiApiを呼び出し、ユーザーの入力値からLocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
+	@Override
+	@Async("Thread")
+	public void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) throws IOException {
 
-		if (!locations.isEmpty()) {
-			//ユーザーが入力した地名がデータベースに存在した場合
-			return locations;
+		emitter.send(SseEmitter.event().name("init").data("connected"));
+
+		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+		// SSEが閉じられたらスケジューラも終了
+		emitter.onCompletion(scheduler::shutdown);
+		emitter.onTimeout(scheduler::shutdown);
+
+		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
+		scheduler.scheduleAtFixedRate(() -> {
+			try {
+				emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+			} catch (IOException e) {
+				emitter.completeWithError(e);
+				scheduler.shutdown();
+			}
+		}, 0, 25, TimeUnit.SECONDS);
+
+		try {
+			//LocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
+			List<LocationData> locations = openAiApi.generateLocationData(input).getLocations();
+
+			if (locations.isEmpty()) {
+				emitter.send(SseEmitter.event().name("not_found").data("error"));
+			} else {
+				weatherForecastSearchMapper.insertLocations(locations);
+				//jobId、locationsのセットでデータを保持
+				results.put(jobId, locations);
+				emitter.send(SseEmitter.event().name("done").data("ok"));
+			}
+		} catch (IOException e) {
+			emitter.completeWithError(e);
 		}
-		//データベースに存在しない場合は、GPTに地名、行政区画名、座標（緯度経度）を出力してもらう
-		locations = chatGPT.structureLocation(input).getLocations();
+	}
 
-		if (!locations.isEmpty()) {
-			//			GPTがLocationData配列を返した時は、データベースに挿入
-			weatherForecastSearchMapper.insertLocations(locations);
-		}
-
-		//存在しない地名（例：「第三東京市」）を入力された時はnullを返却
-		return locations;
+	//	jobIdに対応したLocationDataリストを返す
+	@Override
+	public List<LocationData> getResult(String jobId) {
+		return results.remove(jobId);
 	}
 
 	//	場所と日付から、ForecastForecastday(WeatherApiライブラリが用意したクラス)を返す
 	@Override
 	@Transactional
-	public ForecastForecastday findForecast(Optional<LocationData> location, LocalDate date)
+	public ForecastForecastday findForecast(String cityRegion, LocalDate date)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
 		ForecastForecastday forecastDay = new ForecastForecastday();
-
-		//		locationはNull安全になっているが、普通はnullにならない（ここまで来た時点で何かしらの場所情報が入っているため）
-		String cityRegion = location.orElse(null).getCityRegion();
 
 		//		過去に検索したことがあれば、データベースから1日の天気予報が返される
 		ForecastDay forecast = weatherForecastSearchMapper.selectDay(cityRegion, date);
@@ -584,12 +695,14 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 			return forecastDay;
 		}
 
-		//		緯度と経度
-		String latlon = location.orElse(null).getLatlon();
+		//		データベースにデータがなければ、緯度と経度を用いてWeatherAPIにリクエストを送信
+
+		//		緯度と経度を抽出
+		String latlon = weatherForecastSearchMapper.selectLatLon(cityRegion);
 
 		String dateStr = date.toString();
-		WeatherApiClient client = new WeatherApiClient(latlon, dateStr);
 
+		WeatherApiClient client = clientFactory.create(latlon, dateStr);
 		//			InlineResponse2002はWeatherApiライブラリが用意したクラス
 		InlineResponse2002 resp = client.fetchWeather();
 
@@ -597,41 +710,41 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 		ForecastDay day = forecastDay.getDay();
 		List<ForecastHour> hours = forecastDay.getHour();
 
-//		メソッドに宣言的トランザクションをしている(かつ、DataAccessExceptionは非検査例外である)ので、
-//		データアクセスで例外が放出されたらinsertDay()とinsertHour()はロールバックされます
+		//		メソッドに宣言的トランザクションを付与している(かつ、MyBatisのメソッドから放出されるDataAccessExceptionは非検査例外である)ので、
+		//		データアクセスで例外が放出されたらinsertDay()とinsertHour()はロールバックされます
 		weatherForecastSearchMapper.insertDay(date, cityRegion, day);
 		weatherForecastSearchMapper.insertHour(date, cityRegion, hours);
 
 		return forecastDay;
 	}
 
-	
-//	緯度経度と日付から、気象警報を返す
+	//	緯度経度と日付から、気象警報を返す
 	@Override
-	public String findAlerts(String latlon, LocalDate date)
+	public String findAlerts(String cityRegion, LocalDate date)
 			throws JsonMappingException, JsonProcessingException, ApiException {
 
 		String dateStr = date.toString();
+		String latlon = weatherForecastSearchMapper.selectLatLon(cityRegion);
 
-		WeatherApiClient client = new WeatherApiClient(latlon, dateStr);
+		WeatherApiClient client = clientFactory.create(latlon, dateStr);
 
-//		InlineResponse2001というクラスが返されるのですが、フィールドがネストされているのでゲッターが連続します
-//		直でAlertオブジェクトを返すようにライブラリをいじってみたのですが、うまくいきませんでした
+		//		InlineResponse2001というクラスが返されるのですが、フィールドがネストされているのでゲッターが連続します
+		//		直でAlertオブジェクトを返すようにライブラリをいじってみたのですが、うまくいきませんでした
 		List<AlertsAlert> alerts = client.fetchAlerts().getAlerts().getAlert();
 
 		int size = alerts.size();
 
 		if (size == 0) {
-//			気象警報がなければnullを返す
+			//			気象警報がなければnullを返す
 			return null;
 		}
 
 		ObjectMapper mapper = new ObjectMapper();
-//		size-1としているのは、配列で返される気象警報のうち、最新のものだけをビューに表示したいからです
-//		GPTの処理時間を短くする狙いがあります
+		//		size-1としているのは、配列で返される気象警報のうち、最新のものだけをビューに表示したいからです
+		//		OpenAiApiの処理時間を短くする狙いがあります
 		String jsonStr = mapper.writeValueAsString(alerts.get(size - 1));
 
-		return chatGPT.translateAlert(jsonStr);
+		return openAiApi.translateAlert(jsonStr);
 	}
 
 }
@@ -644,51 +757,73 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 public class WeatherApiClient {
 
 	private String latlon;
-//	java.time.LocalDateではない. WeatherAPIライブラリに準拠してorg.threeten.bp.LocalDateを使用
+	//	java.time.LocalDateではない。WeatherAPIライブラリに準拠してorg.threeten.bp.LocalDateを使用
 	private LocalDate date;
-//	ライブラリが用意しているクラス.API呼び出しに使用.
+	//	ライブラリが用意しているクラス。API呼び出しに使用。
 	private ApisApi apiInstance;
 
-	public WeatherApiClient(String latlon, String dateStr) {
+	public WeatherApiClient(String latlon, String dateStr, String apiKey) {
 		this.latlon = latlon;
 		this.date = LocalDate.parse(dateStr);
-	}
-
-//	9:48 APIのキーをハードコーディングしてしまっているので、隠蔽できるように対処中です。
-	static {
 		ApiClient defaultClient = Configuration.getDefaultApiClient();
 		ApiKeyAuth ApiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
-		ApiKeyAuth.setApiKey(APIキー);
+		ApiKeyAuth.setApiKey(apiKey);
 	}
 
-//	天気情報を取得
+	//	天気情報を取得
 	public InlineResponse2002 fetchWeather() throws JsonMappingException, JsonProcessingException, ApiException {
 		apiInstance = new ApisApi();
 		return (InlineResponse2002) apiInstance.forecastWeather(latlon, 1, date, null, null, "ja", null, null, null);
 	}
-	
-//	気象警報を取得
+
+	//	気象警報を取得
 	public InlineResponse2001 fetchAlerts() throws JsonMappingException, JsonProcessingException, ApiException {
 		apiInstance = new ApisApi();
 		return (InlineResponse2001) apiInstance.forecastWeather(latlon, 1, date, null, null, null, "yes", null, null);
 	}
 
 }
+```
+
+**WeatherApiClient#fetchXX()の戻り値を格納するWeatherAPIライブラリのクラス図**
+![IMG_1473](https://github.com/user-attachments/assets/1162929e-b5e5-4f8b-bf08-f67f4f3854c9)
+
+![IMG_1474](https://github.com/user-attachments/assets/5af69293-9bb8-4bfa-994d-ef536cb5a689)
+
+
+### WeatherApiClientFactory
+
+```java
+@Component
+public class WeatherApiClientFactory {
+
+	private final ApiKeyConfig apiKeyConfig;
+
+	public WeatherApiClientFactory(ApiKeyConfig apiKeyConfig) {
+		this.apiKeyConfig = apiKeyConfig;
+	}
+
+	public WeatherApiClient create(String latlon, String dateStr) {
+		return new WeatherApiClient(latlon, dateStr, apiKeyConfig.getApiKey());
+	}
+
+}
 
 ```
 
-### ChatGPTApiClient
+
+### OpenAiApiClient
 
 ```java
 //OpenAIApiを呼び出すためのクラス
 @Component
 @RequiredArgsConstructor
-public class ChatGPTApiClient{
+public class OpenAiApiClient{
 		
 	private final OpenAiChatModel chatModel;
 	
-//	ユーザーが入力した値から、LocationDataクラスと同じ構造をもったJSONを生成する
-	public LocationDataWrapper structureLocation(String input) {
+//	ユーザーが入力した値から、LocationDataオブジェクトを生成する
+	public LocationDataWrapper generateLocationData(String input) {
 		
 		var outputConverter =new BeanOutputConverter<>(LocationDataWrapper.class);
 		String jsonSchema=outputConverter.getJsonSchema();
@@ -700,7 +835,8 @@ public class ChatGPTApiClient{
 						2. 政令市や区を持つ都市 → 「区名-市名-都道府県/州」。
 						   - 例: 清水寺 → "東山区-京都市-京都府"。
 						   - 例: タイムズスクエア → "マンハッタン区-ニューヨーク市-ニューヨーク州"。
-						3. 大まかな地名（都道府県や州など） → 検索に用いた座標に基づき最も近い行政区を city とする。
+						3. 大まかな地名（都道府県や州など）
+						 → 都庁、県庁、郡庁などの行政機関がある行政区の座標を用い、そこをcityとする。
 						   - 例: 東京 → "新宿区-東京都"。
 						   - 例: カリフォルニア → "サクラメント市-カリフォルニア州"。
 						4. 同名の候補が存在する場合 → 配列にすべて格納する。
@@ -733,6 +869,39 @@ public class ChatGPTApiClient{
 }
 ```
 
+### ApiKeyConfig
+
+```java
+@Configuration
+public class ApiKeyConfig {
+
+	@Value("${weather.api.key}")
+	private String apiKey;
+
+    public String getApiKey() {
+		return apiKey;
+	}
+}
+```
+
+### ThreadPoolConfiguration
+
+```java
+@Configuration
+public class ThreadPoolConfiguration {
+
+	@Bean("Thread")
+	ThreadPoolTaskExecutor configThreadPool() {
+		var executor=new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(3);
+		executor.setQueueCapacity(1);
+		executor.setMaxPoolSize(5);
+		executor.initialize();
+		return executor;
+	}
+}
+```
+
 ### home.html
 
 ```html
@@ -742,7 +911,7 @@ public class ChatGPTApiClient{
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title th:text="天気予報検索"></title>
+	<title>天気予報検索</title>
 		<link rel="stylesheet" th:href="@{/css/style.css}">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
@@ -756,7 +925,7 @@ public class ChatGPTApiClient{
 			<h1 class="text-center mt-3">天気予報検索</h1>
 			<div class="card mt-3">
 				<div class="card-body">
-				<form th:action="@{/search}" th:object="${weatherForecastSearchForm}" method="get"
+				<form th:action="@{/search}" th:object="${weatherForecastSearchForm}" method="post"
 					class="form-horizontal forecast-form">
 					<div class="row mb-3">
 						<label class="col-form-label col-md-2" for="date">日付</label>
@@ -817,7 +986,7 @@ public class ChatGPTApiClient{
 					</li>
 					<li class="nav-item">
 						<a class="nav-link px-3"
-							th:href="@{/alert-info/{latlon}/{date}(latlon=${location.latlon},date=${date})}">
+							th:href="@{/alert-info/{cityRegion}/{date}(cityRegion=${cityRegion},date=${date})}">
 							気象警報
 						</a>
 					</li>
@@ -835,8 +1004,8 @@ public class ChatGPTApiClient{
 				<span th:text="|${#temporals.format(date,'M月d日')}の天気|"></span>
 			</h1>
 			<h3 class="text-center mx-5">
-				<span th:text="|@${location.input}" |></span>
-				<span class="fs-5" th:text="|(${location.cityRegion})|"></span>
+				<span th:text="|@${input}" |></span>
+				<span class="fs-5" th:text="|(${cityRegion})|"></span>
 			</h3>
 			<div th:object="${day}" class="day-weather mt-3">
 				<img th:src="|https://cdn.weatherapi.com/weather/64x64/*{condition.icon}.png|" alt="1日の天気の画像"
@@ -906,9 +1075,10 @@ public class ChatGPTApiClient{
 			<p th:if="${confirm_message}" th:text="${confirm_message}" class="text-danger text-center mt-5"></p>
 			<form th:action="@{/result}" method="get" class="forecast-form">
 				<input type="hidden" name="date" th:value="${date}" />
+				<input type="hidden" name="input" th:value="${input}" />
 				<div class="text-center mb-3">
 					<div th:each="cityRegion:${choices}" class="form-check form-check-inline">
-						<input type="radio" th:value="${cityRegion}" th:text="${cityRegion}" name="cityRegion">
+						<input type="radio" th:value="${cityRegion}" th:text="${cityRegion}" name="cityRegion" required>
 					</div>
 				</div>
 				<div class="d-flex justify-content-center gap-3">
@@ -921,6 +1091,55 @@ public class ChatGPTApiClient{
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
 		integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
 		crossorigin="anonymous"></script>
+</body>
+
+</html>
+```
+
+### waiting.html
+
+```html
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>検索中</title>
+	<link rel="stylesheet" th:href="@{/css/style.css}">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+</head>
+
+<body>
+
+	<div class="text-center mt-3">
+		<p>検索中...(時間がかかる場合があります)</p>
+		<img th:src="@{/image/clBlack30_100_128.gif}" 　width="64" height="64">
+	</div>
+
+	<script th:inline="javascript">
+		const jobId = /*[[${jobId}]]*/null;
+		const eventSource = new EventSource("/observe?jobId="+jobId);
+
+		eventSource.addEventListener("done", () => {
+			eventSource.close();
+			window.location.href = "/processing?jobId="+jobId;
+		});
+
+		eventSource.addEventListener("not_found", () => {
+			eventSource.close();
+			alert("入力された地点は検索ができませんでした");
+			window.location.href = "/";
+		});
+		
+		eventSource.addEventListener("ping", (e) => {
+		    console.log(e.data);
+		});
+
+	</script>
+
+
 </body>
 
 </html>
