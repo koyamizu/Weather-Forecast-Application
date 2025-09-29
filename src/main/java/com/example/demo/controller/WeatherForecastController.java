@@ -41,6 +41,7 @@ public class WeatherForecastController {
 
 	private final WeatherForecastService service;
 	private final Map<String, WeatherForecastSearchForm> forms = new ConcurrentHashMap<>();
+	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 	//	ホーム画面を表示
 	@GetMapping
@@ -85,22 +86,22 @@ public class WeatherForecastController {
 
 	//	SSEからpushを受け取るために、リクエストを送る
 	@GetMapping("observe")
-	public SseEmitter observeResponse(@RequestParam String jobId) {
+	public SseEmitter observeResponse(@RequestParam String jobId) throws IOException {
 
 		//0L = タイムアウト値無制限
 		SseEmitter emitter = new SseEmitter(0L);
+		emitter.send(SseEmitter.event().name("init").data("connected"));
 
 		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
-		//		try-with-resource文で確実にスレッドプールを破棄
-		try (ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()) {
-			scheduler.scheduleAtFixedRate(() -> {
-				try {
-					emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
-				} catch (IOException e) {
-					emitter.completeWithError(e);
-				}
-			}, 0, 15, TimeUnit.SECONDS);
-		}
+		scheduler.scheduleAtFixedRate(() -> {
+		    try {
+		        emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+		    } catch (IOException e) {
+		        emitter.completeWithError(e);
+		        scheduler.shutdown();
+		    }
+		}, 0, 25, TimeUnit.SECONDS);
+
 		var form = forms.get(jobId);
 		// 非同期処理開始→完了したら、クライアントにpush送信
 		// OpenAiApiに入力値を渡して、ユーザー入力値、都市-行政区画名、緯度経度のJSON配列に変換し、その結果をリストLocaitonDataに格納
@@ -112,6 +113,7 @@ public class WeatherForecastController {
 	@GetMapping("processing")
 	public String relayProcessing(@RequestParam String jobId,
 			Model model, RedirectAttributes attributes) {
+        scheduler.shutdown();
 		List<LocationData> locations = service.getResult(jobId);
 		LocalDate date = forms.remove(jobId).getDate();
 		//	共通処理　戻り値はString（リダイレクト先、またはview）
