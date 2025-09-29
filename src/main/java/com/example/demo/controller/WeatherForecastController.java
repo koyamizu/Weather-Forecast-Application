@@ -99,7 +99,7 @@ public class WeatherForecastController {
 				} catch (IOException e) {
 					emitter.completeWithError(e);
 				}
-			}, 0, 25, TimeUnit.SECONDS);
+			}, 0, 15, TimeUnit.SECONDS);
 		}
 		var form = forms.get(jobId);
 		// 非同期処理開始→完了したら、クライアントにpush送信
