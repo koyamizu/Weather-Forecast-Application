@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -57,40 +56,38 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 	public void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) throws IOException {
 
 		emitter.send(SseEmitter.event().name("init").data("connected"));
-		
+
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+		// SSEが閉じられたらスケジューラも終了
+		emitter.onCompletion(scheduler::shutdown);
+		emitter.onTimeout(scheduler::shutdown);
 
 		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
 		scheduler.scheduleAtFixedRate(() -> {
-		    try {
-		        emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
-		    } catch (IOException e) {
-		        emitter.completeWithError(e);
-		        scheduler.shutdown();
-		    }
+			try {
+				emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+			} catch (IOException e) {
+				emitter.completeWithError(e);
+				scheduler.shutdown();
+			}
 		}, 0, 25, TimeUnit.SECONDS);
-		
-		//		非同期処理
-		CompletableFuture.supplyAsync(() -> {
+
+		try {
 			//LocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
-			return openAiApi.generateLocationData(input).getLocations();
-		})
-				.thenAccept(locations -> {
-					try {
-						if (locations.isEmpty()) {
-							emitter.send(SseEmitter.event().name("not_found").data("error"));
-						} else {
-							weatherForecastSearchMapper.insertLocations(locations);
-							//jobId、locationsのセットでデータを保持
-							results.put(jobId, locations);
-							scheduler.shutdown();
-							emitter.send(SseEmitter.event().name("done").data("ok"));
-						}
-					} catch (IOException e) {
-						scheduler.shutdown();
-						emitter.completeWithError(e);
-					}
-				});
+			List<LocationData> locations = openAiApi.generateLocationData(input).getLocations();
+
+			if (locations.isEmpty()) {
+				emitter.send(SseEmitter.event().name("not_found").data("error"));
+			} else {
+				weatherForecastSearchMapper.insertLocations(locations);
+				//jobId、locationsのセットでデータを保持
+				results.put(jobId, locations);
+				emitter.send(SseEmitter.event().name("done").data("ok"));
+			}
+		} catch (IOException e) {
+			emitter.completeWithError(e);
+		}
 	}
 
 	//	jobIdに対応したLocationDataリストを返す
