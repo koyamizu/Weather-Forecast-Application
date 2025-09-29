@@ -16,7 +16,7 @@ import com.example.demo.api.OpenAiApiClient;
 import com.example.demo.entity.LocationData;
 import com.example.demo.entity.LocationDataWrapper;
 import com.example.demo.repository.WeatherForecastMapper;
-import com.example.demo.serivce.Impl.WeatherForecastServiceImpl;
+import com.example.demo.service.Impl.WeatherForecastServiceImpl;
 import com.example.demo.testdata.DummyData;
 
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.example.demo.serivce.Impl;
+package com.example.demo.service.Impl;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -20,7 +20,7 @@ import com.example.demo.api.WeatherApiClient;
 import com.example.demo.api.WeatherApiClientFactory;
 import com.example.demo.entity.LocationData;
 import com.example.demo.repository.WeatherForecastMapper;
-import com.example.demo.serivce.WeatherForecastService;
+import com.example.demo.service.WeatherForecastService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

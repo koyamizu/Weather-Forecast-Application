@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import java.io.IOException;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,7 +16,8 @@ public class WeatherForecastControllerAdvice {
 
 //	500番台のエラーを処理 主にデータアクセスなど
 	@ExceptionHandler({ DataAccessException.class, NullPointerException.class,
-			JsonMappingException.class, JsonProcessingException.class, ApiException.class })
+			JsonMappingException.class, JsonProcessingException.class, ApiException.class
+			,IOException.class})
 	public String showDatabaseErrorPage(Exception e) {
 		e.printStackTrace();
 		return "error/500";

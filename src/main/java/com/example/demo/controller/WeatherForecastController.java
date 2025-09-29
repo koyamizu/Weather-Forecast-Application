@@ -24,7 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.demo.entity.LocationData;
 import com.example.demo.form.WeatherForecastSearchForm;
-import com.example.demo.serivce.WeatherForecastService;
+import com.example.demo.service.WeatherForecastService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -87,17 +87,6 @@ public class WeatherForecastController {
 
 		//0L = タイムアウト値無制限
 		SseEmitter emitter = new SseEmitter(0L);
-//		emitter.send(SseEmitter.event().name("init").data("connected"));
-//
-//		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
-//		scheduler.scheduleAtFixedRate(() -> {
-//		    try {
-//		        emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
-//		    } catch (IOException e) {
-//		        emitter.completeWithError(e);
-//		        scheduler.shutdown();
-//		    }
-//		}, 0, 25, TimeUnit.SECONDS);
 
 		var form = forms.get(jobId);
 		// 非同期処理開始→完了したら、クライアントにpush送信
@@ -110,9 +99,10 @@ public class WeatherForecastController {
 	@GetMapping("processing")
 	public String relayProcessing(@RequestParam String jobId,
 			Model model, RedirectAttributes attributes) {
-//        scheduler.shutdown();
+
 		List<LocationData> locations = service.getResult(jobId);
 		LocalDate date = forms.remove(jobId).getDate();
+		
 		//	共通処理　戻り値はString（リダイレクト先、またはview）
 		return checkSameLocationsAndReturnView(model, attributes, date, locations);
 	}
