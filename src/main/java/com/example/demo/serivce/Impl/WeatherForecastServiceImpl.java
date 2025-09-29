@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -50,9 +53,23 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 
 	//	OpenAiApiを呼び出し、ユーザーの入力値からLocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
 	@Override
-	@Async()
-	public void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) {
+	@Async("Thread")
+	public void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) throws IOException {
 
+		emitter.send(SseEmitter.event().name("init").data("connected"));
+		
+		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
+		scheduler.scheduleAtFixedRate(() -> {
+		    try {
+		        emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+		    } catch (IOException e) {
+		        emitter.completeWithError(e);
+		        scheduler.shutdown();
+		    }
+		}, 0, 25, TimeUnit.SECONDS);
+		
 		//		非同期処理
 		CompletableFuture.supplyAsync(() -> {
 			//LocationDataオブジェクト（地名、都市名-行政区画名、緯度経度）を生成する
@@ -66,9 +83,11 @@ public class WeatherForecastServiceImpl implements WeatherForecastService {
 							weatherForecastSearchMapper.insertLocations(locations);
 							//jobId、locationsのセットでデータを保持
 							results.put(jobId, locations);
+							scheduler.shutdown();
 							emitter.send(SseEmitter.event().name("done").data("ok"));
 						}
 					} catch (IOException e) {
+						scheduler.shutdown();
 						emitter.completeWithError(e);
 					}
 				});

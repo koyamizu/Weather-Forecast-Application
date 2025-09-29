@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,7 +38,7 @@ public class WeatherForecastController {
 
 	private final WeatherForecastService service;
 	private final Map<String, WeatherForecastSearchForm> forms = new ConcurrentHashMap<>();
-	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+//	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 	//	ホーム画面を表示
 	@GetMapping
@@ -90,17 +87,17 @@ public class WeatherForecastController {
 
 		//0L = タイムアウト値無制限
 		SseEmitter emitter = new SseEmitter(0L);
-		emitter.send(SseEmitter.event().name("init").data("connected"));
-
-		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
-		scheduler.scheduleAtFixedRate(() -> {
-		    try {
-		        emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
-		    } catch (IOException e) {
-		        emitter.completeWithError(e);
-		        scheduler.shutdown();
-		    }
-		}, 0, 25, TimeUnit.SECONDS);
+//		emitter.send(SseEmitter.event().name("init").data("connected"));
+//
+//		//		25秒ごとにダミーイベントを送る。push送信に30秒以上かかると、Herokuではタイムアウトになるため。
+//		scheduler.scheduleAtFixedRate(() -> {
+//		    try {
+//		        emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+//		    } catch (IOException e) {
+//		        emitter.completeWithError(e);
+//		        scheduler.shutdown();
+//		    }
+//		}, 0, 25, TimeUnit.SECONDS);
 
 		var form = forms.get(jobId);
 		// 非同期処理開始→完了したら、クライアントにpush送信
@@ -113,7 +110,7 @@ public class WeatherForecastController {
 	@GetMapping("processing")
 	public String relayProcessing(@RequestParam String jobId,
 			Model model, RedirectAttributes attributes) {
-        scheduler.shutdown();
+//        scheduler.shutdown();
 		List<LocationData> locations = service.getResult(jobId);
 		LocalDate date = forms.remove(jobId).getDate();
 		//	共通処理　戻り値はString（リダイレクト先、またはview）

@@ -1,5 +1,6 @@
 package com.example.demo.serivce;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public interface WeatherForecastService {
 
 	List<LocationData> findLocationData(String input);
 
-	void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter);
+	void fetchLocationDataFromOpenAi(String input, String jobId, SseEmitter emitter) throws IOException;
 
 	List<LocationData> getResult(String jobId);
 }
