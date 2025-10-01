@@ -121,7 +121,7 @@ CREATE TABLE hour_forecasts(
 
 # コード一覧
 
-### ディレクトリ構成
+### ディレクトリツリー
 
 ```html
 /
